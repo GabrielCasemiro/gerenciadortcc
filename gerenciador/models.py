@@ -36,14 +36,14 @@ class Trabalho(models.Model):
         default='Andamento'
     )
     data_inicio = models.DateField(help_text="Data de Início", auto_now_add=True)
-    aluno = models.ForeignKey(Usuario, related_name='Aluno',blank=True, null=True,on_delete=models.CASCADE)
-    professor = models.ForeignKey(Usuario, related_name='Professor',blank=True, null=True,on_delete=models.CASCADE)
+    aluno = models.ForeignKey(Usuario, related_name='Aluno',blank=True, null=True)
+    professor = models.ForeignKey(Usuario, related_name='Professor',blank=True, null=True)
 
 class Atividade(models.Model):
     titulo = models.CharField(max_length=150,default='',help_text="Título da Atividade")
     data_inicio = models.DateField(help_text="Data de início da atividade")
     data_final = models.DateField(help_text="Data final da entrega da Atividade")
-    trabalho = models.ForeignKey(Trabalho,related_name='Trabalho')
+    trabalho = models.ForeignKey(Trabalho,related_name='Trabalho',on_delete=models.CASCADE)
     entrega = models.FileField(upload_to='entregas/')
     def range(self):
         datas = []
