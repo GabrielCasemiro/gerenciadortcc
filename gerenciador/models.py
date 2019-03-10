@@ -5,6 +5,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator
 # Create your models here.
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 ESCOLHA_PERFIL = (
     ('Aluno', 'Aluno'),
@@ -36,8 +37,8 @@ class Trabalho(models.Model):
         default='Andamento'
     )
     data_inicio = models.DateField(help_text="Data de Início", auto_now_add=True)
-    professor = models.ForeignKey(Usuario,limit_choices_to={'perfil': 'Professor'}, related_name='Professor')
-    aluno = models.ForeignKey(Usuario, limit_choices_to={'perfil': 'Aluno'}, related_name='Aluno')
+    professor = models.ForeignKey(Usuario,limit_choices_to=Q(perfil='Professor'), related_name='Professor')
+    aluno = models.ForeignKey(Usuario, limit_choices_to=Q(perfil='Aluno'), related_name='Aluno')
 
 class Atividade(models.Model):
     titulo = models.CharField(max_length=150,default='',help_text="Título da Atividade")
