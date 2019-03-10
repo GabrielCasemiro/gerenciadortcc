@@ -36,8 +36,8 @@ class Trabalho(models.Model):
         default='Andamento'
     )
     data_inicio = models.DateField(help_text="Data de Início", auto_now_add=True)
-    aluno = models.ForeignKey(Usuario, related_name='Aluno',blank=True, null=True)
-    professor = models.ForeignKey(Usuario, related_name='Professor',blank=True, null=True)
+    aluno = models.ForeignKey(Usuario, related_name='Aluno',blank=True, null=True,on_delete=models.CASCADE)
+    professor = models.ForeignKey(Usuario, related_name='Professor',blank=True, null=True,on_delete=models.CASCADE)
 
 class Atividade(models.Model):
     titulo = models.CharField(max_length=150,default='',help_text="Título da Atividade")
