@@ -1,0 +1,32 @@
+{% extends 'base_login.html' %}
+{% block content %}
+
+{% if mensagem %}
+    <div class="md-form">
+        <center>
+              <span class="text-danger">Usuário inválido.</span>
+        </center>
+
+</div>
+{% endif %}
+<!--Body-->
+<form method="post" action="/login/" >{% csrf_token %}
+<div class="md-form">
+    <i class="fa fa-user prefix white-text"></i>
+    <input type="text" name="username" id="orangeForm-name" title="Login" placeholder="Login" class="form-control">
+
+</div>
+
+<div class="md-form">
+    <i class="fa fa-envelope prefix white-text"></i>
+    <input type="password" name="password" id="orangeForm-email" title="Senha" placeholder="Senha" class="form-control">
+</div>
+
+        
+<div class="text-center">
+    <button type="submit" class="btn btn-primary btn-lg">Entrar</button>
+    <hr>
+    <a href="#"> <span>Esqueceu a senha? Clique aqui.</span></a> 
+</div>
+</form>
+{% endblock %}

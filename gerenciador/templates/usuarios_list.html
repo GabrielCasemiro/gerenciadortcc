@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .botao{
+        width:50%; 
+        height: 30px !important;
+        padding: 0px;
+    }
+    .click{
+        cursor: pointer;
+    }
+
+</style>
+<!-- Heading -->
+<div class="card mb-4 wow fadeIn">
+
+    <!--Card content-->
+    <div class="card-body d-sm-flex justify-content-between">
+
+        <h4 class="mb-2 mb-sm-0 pt-1">
+            <span>Listagem de Usuários</span>
+        </h4>
+        <a href="/usuario/add/">
+            <button class="btn btn-primary btn-sm my-0 p" type="submit">
+                <i class="fa fa-plus"></i>
+                Novo Usuário
+            </button>
+        </a>
+
+
+    </div>
+
+</div>
+<!-- Heading -->
+{%if mensagem %}
+<!-- Mensagem -->
+<div class="card mb-4 bg-primary text-white wow fadeIn">
+
+    <!--Card content-->
+    <div class="card-body d-sm-flex justify-content-between">
+
+        <h4 class="mb-2 mb-sm-0 pt-1">
+            <span>{{ mensagem }}</span>
+        </h4>
+
+
+
+    </div>
+
+</div>
+<!-- Mensagem -->
+{% endif %}
+<div class="row wow fadeIn">
+
+    <!--Grid column-->
+    <div class="col-md-12 mb-4">
+
+        <!--Card-->
+        <div class="card">
+
+            <!--Card content-->
+            <div class="card-body">
+
+
+                <div class="table-responsive-sm">
+
+                    <table class="table table-hover ">
+                        <!-- Table head -->
+                        <thead class="blue lighten-4">
+                            <tr>
+
+                                <th>Nome</th>
+                                <th>RA</th>
+                                <th>Email</th>
+                                <th>Perfil</th>
+                                <th>Editar</th>
+                                <th>Excluir</th>
+                            </tr>
+                        </thead>
+                        <!-- Table head -->
+
+                        <!-- Table body -->
+                        <tbody>
+                            {% if usuarios %}
+                            {% for usuario in usuarios %}
+                            <tr>
+                                <td>{{ usuario.username }}</td>
+                                <td>{{ usuario.ra }}</td>
+                                <td>{{ usuario.email }}</td>
+                                <td>{{ usuario.perfil }}</td>
+                                <td class="opcoes">
+                                    <a class="text-white" href="/usuario/edit/{{ usuario.pk }}">
+                                        <button type="submit" data-toggle="tooltip" data-placement="top" title="Editar" class="btn btn-primary  botao click">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                    </a>
+                                </td>
+                                <td>
+                                    <form method="POST" id="formExcluir" action="/usuario/excluir/">{% csrf_token %}
+                                        <input type="text" name="username" value="{{usuario.pk}}" hidden>
+                                        <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                            <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir">
+                                                <i class="fa fa-trash"  ></i>
+                                            </button>
+                                        </span>
+
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td>Sem usuários</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                        <!-- Table body -->
+                    </table>
+                    <!-- Table  -->
+                </div>
+
+            </div>
+
+        </div>
+        <!--/.Card-->
+
+    </div>
+    <!--Grid column-->
+
+</div>
+<!--Grid row-->
+
+{% endblock %}

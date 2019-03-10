@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block content %}
+<style type="text/css">
+.botao{
+    width:100%; 
+    height: 30px !important;
+    padding: 0px;
+}
+</style>
+<!-- Heading -->
+<div class="card mb-4 wow fadeIn">
+
+    <!--Card content-->
+    <div class="card-body d-sm-flex justify-content-between">
+
+        <h4 class="mb-2 mb-sm-0 pt-1">
+            <span>Listagem de Trabalhos</span>
+        </h4>
+        {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+        <a href="/trabalho/add/">
+            <button class="btn btn-primary btn-sm my-0 p" type="submit">
+                <i class="fa fa-plus"></i>
+                Novo trabalho
+            </button>
+        </a>
+        {%endif%}
+
+
+    </div>
+
+</div>
+<!-- Heading -->
+
+
+
+<!--Grid row-->
+<div class="row wow fadeIn">
+    <!--Grid column-->
+    {% if andamento %}
+    <div class="col-md-12 mb-4">
+
+        <!--Card-->
+        <div class="card">
+
+            <!--Card content-->
+            <div class="card-body">
+                <h5 class="card-title">Trabalhos em Andamento</h5>
+                <!-- Table  -->
+                <div class="table-responsive-sm">
+                    <table class="table table-hover">
+                        <!-- Table head -->
+                        <thead class="blue lighten-4">
+                            <tr>
+                                <th width="50%">Título</th>
+                                <th width="15%">Aluno</th>
+                                <th width="15%">Professor</th>
+                                <th width="15%">Data Início</th>
+                            <th>Opções</th>
+                            </tr>
+                        </thead>
+                        <!-- Table head -->
+
+                        <!-- Table body -->
+                        <tbody>
+                            {% for tcc in andamento %}
+                            <tr>
+                                <th>{{ tcc.titulo }}</th>
+                                <td>{{ tcc.aluno.username }}</td>
+                                <td>{{ tcc.professor.username }}</td>
+                                <td>{{ tcc.data_inicio }}</td>
+
+                                
+                                <td>
+                                  <a href="/trabalho/show/{{ tcc.pk }}">
+                                    <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                        <button data-toggle="tooltip" data-placement="top" title="Visualizar" class="btn text-white btn-info botao click ">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </a>
+                                 {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+                                <a class="text-white" href="/trabalho/edit/{{ tcc.pk }}">
+                                    <button type="submit" data-toggle="tooltip" data-placement="top" title="Editar" class="btn btn-primary  botao click">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                </a>
+
+                                <form method="POST" id="formExcluir" action="/trabalho/excluir/">{% csrf_token %}
+                                    <input type="text" name="username" value="{{tcc.pk}}" hidden>
+                                    <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                        <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir">
+                                            <i class="fa fa-trash"  ></i>
+                                        </button>
+                                    </span>
+
+                                </form>
+                                 {%endif%}
+                            </td>
+                           
+                           
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+                <!-- Table body -->
+            </table>
+            <!-- Table  -->
+        </div>
+    </div>
+
+</div>
+<!--/.Card-->
+
+</div>
+<!--Grid column-->
+
+{%endif%}
+{% if pendente %}
+<!--Grid column-->
+<div class="col-md-12 mb-4">
+
+    <!--Card-->
+    <div class="card">
+
+        <!--Card content-->
+        <div class="card-body">
+
+            <!-- Table  -->
+            <h5 class="card-title">Trabalhos Pendentes</h5>
+            <div class="table-responsive-sm">
+                <table class="table table-hover">
+                    <!-- Table head -->
+                    <!-- Table head -->
+                    <thead class="blue lighten-4">
+                        <tr>
+                            <th width="50%">Título</th>
+                            <th width="15%">Aluno</th>
+                            <th width="15%">Professor</th>
+                            <th width="15%">Data Início</th>
+                            <th>Opções</th>
+                        </tr>
+                    </thead>
+                    <!-- Table head -->
+
+                    <!-- Table body -->
+                    <tbody>
+                     {% for tcc in pendente %}
+                     <tr>
+                        <th>{{ tcc.titulo }}</th>
+                        <td>{{ tcc.aluno.username }}</td>
+                        <td>{{ tcc.professor.username }}</td>
+                        <td>{{ tcc.data_inicio }}</td>
+                       
+                        <td>
+                          <a href="/trabalho/show/{{ tcc.pk }}">
+                            <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                <button data-toggle="tooltip" data-placement="top" title="Visualizar" class="btn text-white btn-info botao click ">
+                                    <i class="fa fa-eye"></i>
+                                </button>
+                            </span>
+                        </a>
+                        {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+                        <a class="text-white" href="/trabalho/edit/{{ tcc.pk }}">
+                            <button type="submit" data-toggle="tooltip" data-placement="top" title="Editar" class="btn btn-primary  botao click">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                        </a>
+
+                        <form method="POST" id="formExcluir" action="/trabalho/excluir/">{% csrf_token %}
+                            <input type="text" name="username" value="{{tcc.pk}}" hidden>
+                            <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir">
+                                    <i class="fa fa-trash"  ></i>
+                                </button>
+                            </span>
+
+                        </form>
+                        {%endif%}
+                    </td>
+            </tr>
+
+            {% endfor %}
+        </tbody>
+        <!-- Table body -->
+    </table>
+    <!-- Table  -->
+</div>
+</div>
+
+</div>
+<!--/.Card-->
+
+</div>
+<!--Grid column-->
+
+<!--Grid column-->
+{%endif%}
+{% if concluido %}
+<div class="col-md-12 mb-4">
+
+    <!--Card-->
+    <div class="card">
+
+        <!--Card content-->
+        <div class="card-body">
+
+            <!-- Table  -->
+            <h5 class="card-title">Trabalhos Concluídos</h5>
+            <div class="table-responsive-sm">
+                <table class="table table-hover">
+                    <!-- Table head -->
+                    <!-- Table head -->
+                    <thead class="blue lighten-4">
+                        <tr>
+                            <th width="50%">Título</th>
+                            <th width="15%">Aluno</th>
+                            <th width="15%">Professor</th>
+                            <th width="15%">Data Início</th>
+                            <th>Opções</th>
+                        </tr>
+                    </thead>
+                    <!-- Table head -->
+
+                    <!-- Table body -->
+                    <tbody>
+                     {% for tcc in concluido %}
+                     <tr>
+                        <th>{{ tcc.titulo }}</th>
+                        <td>{{ tcc.aluno.username }}</td>
+                        <td>{{ tcc.professor.username }}</td>
+                        <td>{{ tcc.data_inicio }}</td>
+                        
+                        <td>
+                            <a href="/trabalho/show/{{ tcc.pk }}">
+                                <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                    <button data-toggle="tooltip" data-placement="top" title="Visualizar" class="btn text-white btn-info botao click ">
+                                        <i class="fa fa-eye"></i>
+                                    </button>
+                                </span>
+                            </a>
+                            {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+                            <a class="text-white" href="/trabalho/edit/{{ tcc.pk }}">
+                                <button type="submit" data-toggle="tooltip" data-placement="top" title="Editar" class="btn btn-primary  botao click">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                            </a>
+
+                            <form method="POST" id="formExcluir" action="/trabalho/excluir/">{% csrf_token %}
+                                <input type="text" name="username" value="{{tcc.pk}}" hidden>
+                                <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                    <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir">
+                                        <i class="fa fa-trash"  ></i>
+                                    </button>
+                                </span>
+
+                            </form>
+                            {%endif%}
+                        </td>
+                        
+                </tr>
+
+                {% endfor %}
+            </tbody>
+            <!-- Table body -->
+        </table>
+        <!-- Table  -->
+    </div>
+</div>
+
+</div>
+<!--/.Card-->
+
+</div>
+<!--Grid column-->
+</div>
+<!--Grid row-->
+{%endif%}
+
+{% endblock %}

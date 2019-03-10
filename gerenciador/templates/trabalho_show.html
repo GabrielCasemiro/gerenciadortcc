@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Heading -->
+<div class="card mb-4 wow fadeIn">
+
+  <!--Card content-->
+  <div class="card-body d-sm-flex justify-content-between">
+
+    <h4 class="mb-2 mb-sm-0">
+      <span>Visualização do trabalho: {{trabalho.titulo}}</span>
+    </h4>
+
+  </div>
+
+</div>
+<!-- Heading -->
+
+
+
+<!--Grid row-->
+<div class="row wow fadeIn">
+ <div class="col-md-12 mb-4">
+   <!--Card-->
+   <div class="card">
+
+    <!--Card content-->
+    <div class="card-body">
+      <h5 class="card-title">Descrição</h5>
+      <p>{{trabalho.descricao}}</p>
+      <h5 class="card-title">Data de Início</h5>
+      <p>{{trabalho.data_inicio}}</p>
+      <h5 class="card-title">Aluno </h5>
+      <p>{{trabalho.aluno.ra}} - {{trabalho.aluno.username}}</p>
+      <h5 class="card-title">Professor</h5>
+      <p>{{trabalho.professor.ra}} - {{trabalho.professor.username}}</p>
+      <h5 class="card-title">Status</h5>
+      <p>{{trabalho.tipo}}</p>
+      <hr>
+      <h5 class="card-title">Cronograma</h5>
+      <div class="cd-schedule">
+       <div class="timeline">
+       </div>
+       {% if atividades %}
+       <table class="table table-responsive table-inverse border  table-bordered">
+
+        <thead class="thead-light">
+          <tr>
+
+            <th scope="col">Atividade</th>
+            <th>Janeiro</th>
+            <th>Fevereiro</th>
+            <th>Março</th>
+            <th>Abril</th>
+            <th>Maio</th>
+            <th>Junho</th>
+            <th>Julho</th>
+            <th>Agosto</th>
+            <th>Setembro</th>
+            <th>Outubro</th>
+            <th>Novembro</th>
+            <th>Dezembro</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for atividade in atividades %}
+          <tr>
+
+            <th scope="row">{{ atividade.titulo }}</th>
+            <td {% if 1 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 2 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 3 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 4 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 5 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 6 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 7 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 8 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 9 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 10 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 11 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+            <td {% if 12 in atividade.range %}class="bg-primary  text-white"{%endif%}></td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+
+
+
+
+
+    {% else %}
+    <p>Ainda não há atividades cadastradas para esse trabalho.</p>
+    {% endif %}
+    {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+    <button type="submit" data-toggle="tooltip" data-placement="top" id="adicionar" title="Cadastrar Cronograma" class="btn btn-primary  botao click">
+      <i class="fa fa-plus"></i>&nbsp; ATIVIDADE
+    </button>
+    {% endif %}
+    <div id="form"></div>
+  </div>
+</div>
+</div>
+
+</div>
+<!--/.Card-->
+</div>
+</div>
+
+<script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+
+<!--Grid row-->
+<script type="text/javascript">
+  var adicionar = 0;
+  $("#adicionar").click(function(){
+    if(adicionar == 0){
+      $("#form").append("<form action='/trabalho/show/{{id}}/' method='POST'>{% csrf_token %}<div class='row'> <div class='col-12 col-md-6'> <div id='div_id_titulo' class='form-group'> <label for='id_titulo' class='col-form-label  requiredField'>Titulo<span class='asteriskField'>*</span> </label> <div class=''> <input type='text' name='titulo' id='id_titulo' required class='textinput textInput form-control' maxlength='150' /> <small id='hint_id_titulo' class='form-text text-muted'>Título do Trabalho</small> </div> </div> </div> <div class='col-12 col-md-6'> <div id='div_data_inicial' class='form-group'> <label for='data_inicial' class='col-form-label  requiredField'>Data Inicial<span class='asteriskField'>*</span> </label> <div class=''> <input type='date' name='data_inicio' id='data_inicial' required class='textinput textInput form-control' maxlength='150' /> <small id='hint_data_inicial' class='form-text text-muted'>Data inicial do trabalho</small> </div> </div> </div> <div class='col-12 col-md-6'> <div id='div_data_final' class='form-group'> <label for='data_final' class='col-form-label  requiredField'>Data Final<span class='asteriskField'>*</span> </label> <div class=''> <input type='date' name='data_final' id='data_final' required class='textinput textInput form-control' maxlength='150' /> <small id='hint_data_final' class='form-text text-muted'>Data final do trabalho</small> </div> </div> </div><input type='text' name='trabalho' id='id_trabalho' required class='textinput textInput form-control'value='{{id}}' hidden/>  <div class='col-12 col-md-6 mt-3'> <button type='submit' class='btn btn-primary btn-block'> Salvar </button> </div> </div> </form>");
+    }
+    adicionar = 1;
+  });
+
+</script>
+{% endblock %}

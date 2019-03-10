@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Gerenciamento de TCC</title>
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+        <!-- Bootstrap core CSS -->
+        <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+        <link href="{% static 'css/mdb.min.css' %}" rel="stylesheet">
+        <link href="{% static 'css/style.min.css' %}" rel="stylesheet">
+
+        <!-- Material Design Bootstrap -->
+
+        <style>
+
+            .intro-2 {
+                background-color: #eee!important;
+            }
+            .top-nav-collapse {
+                background-color: black !important;
+            }
+            .navbar:not(.top-nav-collapse) {
+                background: transparent !important;
+            }
+            @media (max-width: 768px) {
+                .navbar:not(.top-nav-collapse) {
+                    background: black !important;
+                }
+            }
+
+            .card {
+                background-color: white;
+            }
+            .md-form label {
+                color: black;
+            }
+            h6 {
+                line-height: 1.7;
+            }
+
+            html,
+            body,
+            header,
+            .view {
+                height: 100%;
+            }
+
+            @media (min-width: 560px) and (max-width: 740px) {
+                html,
+                body,
+                header,
+                .view {
+                    height: 650px;
+                }
+            }
+
+            @media (min-width: 800px) and (max-width: 850px) {
+                html,
+                body,
+                header,
+                .view  {
+                    height: 650px;
+                }
+            }
+
+            .card {
+                margin-top: 30px;
+                /*margin-bottom: -45px;*/
+
+            }
+
+            .md-form input[type=text]:focus:not([readonly]),
+            .md-form input[type=password]:focus:not([readonly]) {
+                border-bottom: 1px solid #4285f4!important;
+                box-shadow: 0 1px 0 0 #4285f4!important;
+            }
+            .md-form input[type=text]:focus:not([readonly])+label,
+            .md-form input[type=password]:focus:not([readonly])+label {
+                color: black;
+            }
+
+            .md-form .form-control {
+                color: black;
+            }
+
+            .navbar.navbar-dark form .md-form input:focus:not([readonly]) {
+                border-color: #4285f4!important;
+            }
+
+            @media (min-width: 800px) and (max-width: 850px) {
+                .navbar:not(.top-nav-collapse) {
+                    background: #3f51b5!important;
+                }
+            }
+
+        </style>
+    </head>
+
+    <body >
+
+        <!--Intro Section-->
+        <section class="view intro-2">
+            <div class="mask  h-100 d-flex justify-content-center align-items-center">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-xl-5 col-lg-6 col-md-10 col-sm-12 mx-auto mt-5">
+
+                            <!--Form with header-->
+                            <div class="card wow fadeIn" data-wow-delay="0.3s">
+                                <div class="form-header bg-primary text-white">
+                                    <center>
+                                        <h3><i class="fa fa-user mt-2 mb-2"></i> Login</h3>
+                                    </center>
+                                </div>
+                                <div class="card-body">
+                                    {% block content %}
+                                    {% endblock %}
+                                </div>
+                            </div>
+                            <!--/Form with header-->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!--Main layout-->
+
+
+
+        <!-- SCRIPTS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web-animations/2.2.2/web-animations.min.js"></script>
+        <!-- JQuery -->
+        <link href="{% static 'js/jquery-3.3.1.min.js' %}" rel="stylesheet">
+        <link href="{% static 'js/popper.min.js' %}" rel="stylesheet">
+        <link href="{% static 'js/bootstrap.min.js' %}" rel="stylesheet">
+        <link href="{% static 'js/mdb.min.js' %}" rel="stylesheet">
+
+        <!-- Initializations -->
+
+
+        <script type="text/javascript">
+            // Animations initialization
+            new WOW().init();
+        </script>
+
+
+    </body>
+
+</html>

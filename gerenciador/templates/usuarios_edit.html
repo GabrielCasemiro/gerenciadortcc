@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<!-- Heading -->
+<div class="card mb-4 wow fadeIn">
+
+    <!--Card content-->
+    <div class="card-body d-sm-flex justify-content-between">
+
+        <h4 class="mb-2 mb-sm-0 pt-1">
+            <span>Editar Usuário</span>
+        </h4>
+
+
+
+    </div>
+
+</div>
+<!-- Heading -->
+<div class="row wow fadeIn">
+
+    <!--Grid column-->
+    <div class="col-md-12 mb-4">
+
+        <!--Card-->
+        <div class="card">
+
+            <!--Card content-->
+            <div class="card-body">
+
+                <br>
+                <br>
+                <form method="post" action="/usuario/edit/{{username}}/" >{% csrf_token %}
+                       {{ form|crispy }}
+                    <button type="submit" class="btn btn-primary"> Atualizar </button>
+                </form>
+               
+
+            </div>
+
+        </div>
+        <!--/.Card-->
+
+    </div>
+    <!--Grid column-->
+
+</div>
+
+{% endblock %}
+ {% block javascript %}
+     
+<!--Grid row-->
+<script type="text/javascript">
+    $("#id_")
+
+
+</script>
+{% endblock %}   
