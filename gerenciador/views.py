@@ -18,14 +18,12 @@ from django.http import JsonResponse
 from datetime import datetime, timedelta
 import unicodedata
 
-
-link = "http://gerenciadortcc.pythonanywhere.com/login/"
 ############################################
 ##                                        ##
 ##           FUNCOES GENÉRICAS            ##
 ##                                        ##
 ############################################
-
+link_site = "http://gerenciadortcc.pythonanywhere.com/login/"
 def strip_accents(text):
     try:
         text = unicode(text, 'utf-8')
@@ -102,7 +100,7 @@ def trabalho_show(request, username):
         dados_form = request.POST
         if form.is_valid():
             form.save()
-            mensagem_email = u"Uma nova atividade foi cadastrada no cronograma do TCC de seguinte título:"+trabalho.titulo+".\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+dados_form['titulo']+"\nData de Início: "+dados_form['data_inicio']+"\nData de Término: "+dados_form['data_final']+"\n\n"+"Acesse o sistema utilizando o link: "+link+"."
+            mensagem_email = u"Uma nova atividade foi cadastrada no cronograma do TCC de seguinte título:"+trabalho.titulo+".\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+dados_form['titulo']+"\nData de Início: "+dados_form['data_inicio']+"\nData de Término: "+dados_form['data_final']+"\n\n"+"Acesse o sistema utilizando o link: "+"http://gerenciadortcc.pythonanywhere.com/login/"+"."
             email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[trabalho.aluno.email, trabalho.professor.email])
             email.send()
             return redirect('/trabalho/show/' + username)
@@ -110,18 +108,19 @@ def trabalho_show(request, username):
             return redirect('/index/')
 
     atividades = Atividade.objects.filter(trabalho=username).order_by("data_inicio")
+    meses_atividades = []
+    if atividades:
+        datas_atividades = Atividade.objects.filter(trabalho=username).values_list('data_inicio', flat=True).distinct()
 
-    datas_atividades = Atividade.objects.filter(trabalho=username).values_list('data_inicio', flat=True).distinct()
+        ## Calcula os meses das atividades ###
+        maximo_date = max(datas_atividades)
+        minimo = min(datas_atividades)
+        meses_atividades = [minimo.strftime('%m/%Y')]
+        from calendar import monthrange
 
-    ## Calcula os meses das atividades ###
-    maximo_date = max(datas_atividades)
-    minimo = min(datas_atividades)
-    meses_atividades = [minimo.strftime('%m/%Y')]
-    from calendar import monthrange
-
-    while minimo <= maximo_date:
-        minimo += timedelta(days=monthrange(minimo.year, minimo.month)[1])
-        meses_atividades.append( datetime(minimo.year, minimo.month, 1).strftime('%m/%Y') )
+        while minimo <= maximo_date:
+            minimo += timedelta(days=monthrange(minimo.year, minimo.month)[1])
+            meses_atividades.append( datetime(minimo.year, minimo.month, 1).strftime('%m/%Y') )
     return render(request, 'trabalho_show.html', {'trabalho':trabalho,'path':path,'usuario':usuario,'id':username,'atividades':atividades,'meses_atividades':meses_atividades})
 
 def trabalho_edit(request, username): 
@@ -147,7 +146,7 @@ def trabalho_add(request):
         if f.is_valid():
             f.save()
             ### ENVIO DE EMAILS ###
-            mensagem_email = "\n\nUm trabalho foi cadastrado no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: %s" % (link)            
+            mensagem_email = "\n\nUm trabalho foi cadastrado no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: " + link_site + "."
             email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[Usuario.objects.filter(username=teste['aluno'])[0].email,Usuario.objects.filter(username=teste['professor'])[0].email])
             email.send()
             response = redirect('/index/')
@@ -200,7 +199,7 @@ def usuario_add(request):
             f.save()
             usuarios = Usuario.objects.all()
             mensagem = "Usuário cadastrado com sucesso!" 
-            mensagem_email = "\n\nParabéns %s! Você agora tem acesso ao sistema de Gerenciador de TCC.\n"+"Seu login: %s \nSua senha: %s\n\n"+"Acesse o sistema utilizando o link: %s" % (teste['username'],teste['ra'],teste['password'],link)            
+            mensagem_email = "\n\nParabéns " + teste['username'] + "! Você agora tem acesso ao sistema de Gerenciador de TCC.\n"+"Seu login: " + teste['ra'] + "\nSua senha: " + teste['password'] + "\n\nAcesse o sistema utilizando o link: " + link_site + "."        
             email = EmailMessage('Acesso ao Sistema Gerenciador de TCC', mensagem_email, to=[teste['email']])
             email.send()
             return render(request, 'usuarios_list.html', {"mensagem":mensagem,"usuario":usuario,"usuarios":usuarios,"path": path})
@@ -259,7 +258,7 @@ def recuperar_senha(request):
         except:
             return JsonResponse({'mensagem': mensagem})
         if usuario != False:
-            mensagem_email = "\n\n%s, seu acesso no Sistema de Gerenciador de TCC foi recuperado!\n\nSeu login: %s \nSua senha: %s\n\nAcesse o sistema utilizando o link: %s" % (usuario.username,usuario.ra,usuario.password,link)            
+            mensagem_email = "\n\n"+ usuario.username +", seu acesso no Sistema de Gerenciador de TCC foi recuperado!\n\nSeu login: "+ str(usuario.ra)+"\nSua senha: "+usuario.password+"\n\nAcesse o sistema utilizando o link: " + link_site + "." 
             email = EmailMessage('Recuperação de Senha - Sistema Gerenciador de TCC', mensagem_email, to=[usuario.email])
             email.send()
             return JsonResponse({'mensagem': 'Sua acesso foi recuperado. Verifique seu e-mail para concluir a recuperação.'})
