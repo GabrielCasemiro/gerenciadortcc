@@ -7,22 +7,26 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login as auth_login
 from django.http import HttpResponseRedirect
 from django.db import models
-from django.forms import ModelForm, ModelChoiceField
+from django.forms import ModelForm, ModelChoiceField, Textarea
 from django.shortcuts import redirect
 from .models import *
 from django import forms
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.core.mail import EmailMessage
+from django.http import JsonResponse
+from datetime import datetime, timedelta
+import unicodedata
+
+
+link = "http://gerenciadortcc.pythonanywhere.com/login/"
+############################################
+##                                        ##
+##           FUNCOES GENÉRICAS            ##
+##                                        ##
+############################################
+
 def strip_accents(text):
-    """
-    Strip accents from input String.
-
-    :param text: The input string.
-    :type text: String.
-
-    :returns: The processed String.
-    :rtype: String.
-    """
     try:
         text = unicode(text, 'utf-8')
     except (TypeError, NameError): # unicode is a default on python 3 
@@ -32,14 +36,26 @@ def strip_accents(text):
     text = text.decode("utf-8")
     return str(text)
 
+############################################
+##                                        ##
+##             MODEL FORMS                ##
+##                                        ##
+############################################
+
 class UserForm(forms.ModelForm):
     class Meta:
         model = Usuario
-        fields = ['username','ra','password','email','ra','perfil']
+        fields = ['username','ra','password','email','perfil']
+        labels = {
+        "username": "Nome Completo",
+        "ra":"RA",
+        "password": "Senha",
+        "email":"E-mail",
+        "perfil":"Perfil de Acesso"
+        }
         widgets = {
         'password': forms.PasswordInput(),
         }
-
 
 class UserModelChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
@@ -51,11 +67,20 @@ class TrabalhoForm(forms.ModelForm):
     class Meta:
         model = Trabalho
         fields = ['titulo','descricao','aluno','professor','tipo']
+        widgets = {
+            'descricao': Textarea(attrs={'cols': 80, 'rows': 10}),
+        }
 
 class AtividadeForm(forms.ModelForm):
     class Meta:
         model = Atividade
         fields = ['titulo','data_inicio','data_final','trabalho']
+
+############################################
+##                                        ##
+##             TRABALHOS                  ##
+##                                        ##
+############################################
 
 def trabalho_delete(request):
     name = request.POST.get('username','')
@@ -66,22 +91,38 @@ def trabalho_delete(request):
             except:
                 pass
     return redirect('/index/')
+
 def trabalho_show(request, username):
     usuario = request.user 
     path = "trabalho"
 
-    trabalho = get_object_or_404(Trabalho, pk=username)
+    trabalho = get_object_or_404(Trabalho, pk=int(username))
     if request.method == "POST":
         form = AtividadeForm(request.POST or None)
+        dados_form = request.POST
         if form.is_valid():
             form.save()
+            mensagem_email = u"Uma nova atividade foi cadastrada no cronograma do TCC de seguinte título:"+trabalho.titulo+".\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+dados_form['titulo']+"\nData de Início: "+dados_form['data_inicio']+"\nData de Término: "+dados_form['data_final']+"\n\n"+"Acesse o sistema utilizando o link: "+link+"."
+            email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[trabalho.aluno.email, trabalho.professor.email])
+            email.send()
             return redirect('/trabalho/show/' + username)
         else:
             return redirect('/index/')
 
-    atividades = Atividade.objects.filter(trabalho=username).all()
-    return render(request, 'trabalho_show.html', {'trabalho':trabalho,'path':path,'usuario':usuario,'id':username,'atividades':atividades})
+    atividades = Atividade.objects.filter(trabalho=username).order_by("data_inicio")
 
+    datas_atividades = Atividade.objects.filter(trabalho=username).values_list('data_inicio', flat=True).distinct()
+
+    ## Calcula os meses das atividades ###
+    maximo_date = max(datas_atividades)
+    minimo = min(datas_atividades)
+    meses_atividades = [minimo.strftime('%m/%Y')]
+    from calendar import monthrange
+
+    while minimo <= maximo_date:
+        minimo += timedelta(days=monthrange(minimo.year, minimo.month)[1])
+        meses_atividades.append( datetime(minimo.year, minimo.month, 1).strftime('%m/%Y') )
+    return render(request, 'trabalho_show.html', {'trabalho':trabalho,'path':path,'usuario':usuario,'id':username,'atividades':atividades,'meses_atividades':meses_atividades})
 
 def trabalho_edit(request, username): 
     instance = get_object_or_404(Trabalho, pk=username)
@@ -105,6 +146,10 @@ def trabalho_add(request):
         f = TrabalhoForm(teste)
         if f.is_valid():
             f.save()
+            ### ENVIO DE EMAILS ###
+            mensagem_email = "\n\nUm trabalho foi cadastrado no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: %s" % (link)            
+            email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[Usuario.objects.filter(username=teste['aluno'])[0].email,Usuario.objects.filter(username=teste['professor'])[0].email])
+            email.send()
             response = redirect('/index/')
             return response
         else:
@@ -113,19 +158,28 @@ def trabalho_add(request):
     link = "/trabalho/add/"
     return render(request, 'model_form.html', {"usuario":usuario,"form":form,"path": path,"titulo":titulo,"link":link})
 
+############################################
+##                                        ##
+##             USUÁRIOS                   ##
+##                                        ##
+############################################
+
 def usuario_edit(request, username): 
-    instance = get_object_or_404(Usuario, username=username)
+    instance = get_object_or_404(Usuario, ra=int(username))
     if request.method == "POST":
         form = UserForm(request.POST or None, instance=instance)
-        usuario = get_object_or_404(User, username=username)
         if form.is_valid():
             form.save()
+            usuario = get_object_or_404(User, username=username)
+            usuario.username = form.data['ra']
+            usuario.first_name = form.data['username']
+            usuario.email = form.data['email']
             usuario.set_password(form.data['password'])
             usuario.save()
             return HttpResponseRedirect('/usuario/list/')
     else:
         form = UserForm(instance=instance)
-    return render(request, 'usuarios_edit.html', {'form': form,"username":username}) 
+    return render(request, 'usuarios_edit.html', {'form': form,"ra":username}) 
 
 def usuario_add(request):
     path = str(request.path)
@@ -138,7 +192,7 @@ def usuario_add(request):
         teste = request.POST.copy() 
         f = UserForm(teste)
         if f.is_valid():
-            user = User.objects.create_user(teste['username'], teste['email'], teste['password'])
+            user = User.objects.create_user(teste['ra'], teste['email'], teste['password'],first_name=teste['username'])
             user.is_superuser = 1
             user.is_staff = 0
             user.is_active = 1
@@ -146,6 +200,9 @@ def usuario_add(request):
             f.save()
             usuarios = Usuario.objects.all()
             mensagem = "Usuário cadastrado com sucesso!" 
+            mensagem_email = "\n\nParabéns %s! Você agora tem acesso ao sistema de Gerenciador de TCC.\n"+"Seu login: %s \nSua senha: %s\n\n"+"Acesse o sistema utilizando o link: %s" % (teste['username'],teste['ra'],teste['password'],link)            
+            email = EmailMessage('Acesso ao Sistema Gerenciador de TCC', mensagem_email, to=[teste['email']])
+            email.send()
             return render(request, 'usuarios_list.html', {"mensagem":mensagem,"usuario":usuario,"usuarios":usuarios,"path": path})
         else:
             form = UserForm(teste)
@@ -154,16 +211,16 @@ def usuario_add(request):
 def usuario_delete(request):
     path = str(request.path)
     usuario = request.user 
-    name = request.POST.get('username','')
+    ra = request.POST.get('ra','')
     mensagem = ''
     if request.method == "POST":
-        if name:
+        if ra:
             try:
-                User.objects.filter(username=name).delete()
-                Usuario.objects.filter(username=name).delete()
+                User.objects.filter(username=ra).delete()
+                Usuario.objects.filter(ra=ra).delete()
             except:
                 pass
-            mensagem = "Usuário " + name + " deletado com sucesso!" 
+            mensagem = "Usuário " + ra + " deletado com sucesso!" 
             
     usuarios = Usuario.objects.all()
     return render(request, 'usuarios_list.html', {"mensagem":mensagem,"usuario":usuario,"usuarios":usuarios,"path": path})
@@ -173,7 +230,48 @@ def usuario_list(request):
     usuario = request.user 
     usuarios = Usuario.objects.all()
     return render(request, 'usuarios_list.html', {"usuario":usuario,"usuarios":usuarios,"path": path})
-    
+
+def removerAtividade(request):
+    if request.method == "POST":
+        id_atividade = request.POST.get('id_atividade','')
+        mensagem = "Atividade não encontrada! Entre em contato com os administradores do sistema."
+        usuario = False
+        try:
+            atividade = get_object_or_404(Atividade, pk=int(id_atividade))
+        except:
+            return JsonResponse({'mensagem': mensagem})
+        if atividade != False:
+            try:
+                atividade.delete()
+                return JsonResponse({'mensagem': 'Atividade removida com sucesso!'})
+            except:
+                pass
+    else:
+        response = redirect('/index/')
+        return response
+def recuperar_senha(request):
+    if request.method == "POST":
+        username = request.POST.get('ra','')
+        mensagem = "Usuário não encontrado! Verifique o RA e tente novamente."
+        usuario = False
+        try:
+            usuario = get_object_or_404(Usuario, ra=int(username))
+        except:
+            return JsonResponse({'mensagem': mensagem})
+        if usuario != False:
+            mensagem_email = "\n\n%s, seu acesso no Sistema de Gerenciador de TCC foi recuperado!\n\nSeu login: %s \nSua senha: %s\n\nAcesse o sistema utilizando o link: %s" % (usuario.username,usuario.ra,usuario.password,link)            
+            email = EmailMessage('Recuperação de Senha - Sistema Gerenciador de TCC', mensagem_email, to=[usuario.email])
+            email.send()
+            return JsonResponse({'mensagem': 'Sua acesso foi recuperado. Verifique seu e-mail para concluir a recuperação.'})
+    else:
+        return render(request, 'recuperar_senha.html')
+
+############################################
+##                                        ##
+##             VIEWS                      ##
+##                                        ##
+############################################
+
 def login(request):
     username = request.POST.get('username','')
     password = request.POST.get('password','')
@@ -181,7 +279,7 @@ def login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             try:
-                usuario = get_object_or_404(Usuario, username=username)
+                usuario = get_object_or_404(Usuario, ra=username)
             except:
                 pass        
             try:
@@ -214,7 +312,6 @@ def home(request):
         "pendente":pendente,
         "concluido":concluido})
 
-# LOGOUT
 def logout_act(request):
     logout(request)
     return HttpResponseRedirect('/login/')

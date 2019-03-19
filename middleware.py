@@ -11,7 +11,7 @@ class SimpleMiddleware:
 
         response = self.get_response(request)
         path = str(request.path)
-        if not request.user.is_authenticated and not path.startswith('/login/'):
+        if not request.user.is_authenticated and not path.startswith('/login/') and not path.startswith('/recuperar_senha/'):
             return HttpResponseRedirect('/login/')
         if request.user.is_authenticated and path == '/':
             return HttpResponseRedirect('/index/')

@@ -31,25 +31,21 @@
     </div>
 
 </div>
-<!-- Heading -->
+
+
 {%if mensagem %}
 <!-- Mensagem -->
 <div class="card mb-4 bg-primary text-white wow fadeIn">
-
     <!--Card content-->
     <div class="card-body d-sm-flex justify-content-between">
-
         <h4 class="mb-2 mb-sm-0 pt-1">
             <span>{{ mensagem }}</span>
         </h4>
-
-
-
     </div>
-
 </div>
 <!-- Mensagem -->
 {% endif %}
+
 <div class="row wow fadeIn">
 
     <!--Grid column-->
@@ -68,11 +64,10 @@
                         <!-- Table head -->
                         <thead class="blue lighten-4">
                             <tr>
-
                                 <th>Nome</th>
                                 <th>RA</th>
-                                <th>Email</th>
-                                <th>Perfil</th>
+                                <th>E-mail</th>
+                                <th>Perfil de Acesso</th>
                                 <th>Editar</th>
                                 <th>Excluir</th>
                             </tr>
@@ -89,7 +84,7 @@
                                 <td>{{ usuario.email }}</td>
                                 <td>{{ usuario.perfil }}</td>
                                 <td class="opcoes">
-                                    <a class="text-white" href="/usuario/edit/{{ usuario.pk }}">
+                                    <a class="text-white" href="/usuario/edit/{{ usuario.ra }}">
                                         <button type="submit" data-toggle="tooltip" data-placement="top" title="Editar" class="btn btn-primary  botao click">
                                             <i class="fa fa-edit"></i>
                                         </button>
@@ -97,7 +92,7 @@
                                 </td>
                                 <td>
                                     <form method="POST" id="formExcluir" action="/usuario/excluir/">{% csrf_token %}
-                                        <input type="text" name="username" value="{{usuario.pk}}" hidden>
+                                        <input type="text" name="ra" value="{{usuario.ra}}" hidden>
                                         <span data-toggle="modal" data-target="#modalLRFormDemo">
                                             <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir">
                                                 <i class="fa fa-trash"  ></i>
@@ -122,15 +117,11 @@
                     </table>
                     <!-- Table  -->
                 </div>
-
             </div>
-
         </div>
         <!--/.Card-->
-
     </div>
     <!--Grid column-->
-
 </div>
 <!--Grid row-->
 

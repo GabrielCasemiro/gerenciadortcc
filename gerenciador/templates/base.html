@@ -30,21 +30,21 @@
 
                 <br>
                 <center>
-                    <i class="fa fa-user mr-3"> </i> Bem-vindo, {{ request.session.perfil }} {{ usuario.username }}
+                    <i class="fa fa-user mr-3"> </i> Bem-vindo, {{ request.session.perfil }} {{ usuario.first_name }}
                 </center>
 
                 <br>
                 <div class="list-group list-group-flush">
-                    <a href="/index/" class="list-group-item list-group-item-action {%ifequal path "/index/" %} waves-effect active {%endifequal%}{%ifequal path "/trabalho/add/" %} waves-effect active {%endifequal%}{%ifequal path "trabalho" %} waves-effect active {%endifequal%}">
+                    <a href="/index/" class="list-group-item list-group-item-action waves-effect {%if "index" in path or "trabalho" in path %}  active {%endif%}">
                         <i class="fa fa-list mr-3"></i>Trabalhos
                     </a>
-                      {% ifequal request.session.perfil "Coordenador" %}
+                    {% ifequal request.session.perfil "Coordenador" %}
                     <a href="#" class="list-group-item list-group-item-action waves-effect">
                         <i class="fa fa-table mr-3"></i>Atas</a>
                        
-                    <a href="/usuario/list/" class="list-group-item list-group-item-action {%ifequal path "/usuario/list/" %} waves-effect active {%endifequal%}{%ifequal path "/usuario/excluir/" %} waves-effect active {%endifequal%}{%ifequal path "/usuario/add/" %} waves-effect active {%endifequal%}">
+                    <a href="/usuario/list/" class="list-group-item list-group-item-action {% if "usuario" in path  %} waves-effect active {%endif%}">
                         <i class="fa fa-user mr-3"></i>Usuários</a>
-                        {%endifequal%}
+                    {%endifequal%}
                     <a href="/logout/" class="list-group-item list-group-item-action waves-effect">
                         <i class="fa fa-sign-out  mr-3"></i>Sair</a>
                 </div>

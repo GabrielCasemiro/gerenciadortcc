@@ -1,0 +1,49 @@
+{% extends 'base_login.html' %}
+{% block content %}
+
+{% if mensagem %}
+<div class="md-form">
+    <center>
+      <span class="text-danger">Usuário inválido.</span>
+  </center>
+
+</div>
+{% endif %}
+<!--Body-->
+
+<div class="md-form">
+    <i class="fa fa-user prefix white-text"></i>
+    <input type="text" name="ra" id="ra" title="Login" placeholder="Digite seu Login" class="form-control">
+</div>
+
+
+<div class="text-center">
+    <button type="button" id="recuperar_botao" class="btn btn-primary btn-lg">Recuperar Senha</button>
+    <hr>
+    <a href="/login/"> <span>Voltar</span></a> 
+</div>
+
+{% endblock %}
+
+{%block script%}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+    $("#recuperar_botao").click(function () {
+      var ra = $("#ra").val();;
+      $.ajax({
+         type:"POST",
+         url:"/recuperar_senha/",
+         data: {csrfmiddlewaretoken:'{{ csrf_token }}', ra:ra},
+
+         success: function(data){
+             alert(data.mensagem);  
+
+         },
+     });
+
+  });
+
+</script>
+
+
+{%endblock%}

@@ -17,9 +17,8 @@
         <!-- Material Design Bootstrap -->
 
         <style>
-
             .intro-2 {
-                background-color: #eee!important;
+                background-image: url("{% static "background.jpg" %}");
             }
             .top-nav-collapse {
                 background-color: black !important;
@@ -149,9 +148,12 @@
         <script type="text/javascript">
             // Animations initialization
             new WOW().init();
+
+
         </script>
 
-
+        {%block script%}
+        {%endblock%}
     </body>
 
 </html>

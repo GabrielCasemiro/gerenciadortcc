@@ -28,5 +28,7 @@ urlpatterns = [
     url(r'^trabalho/edit/(?P<username>\w+)/$', views.trabalho_edit),
     url(r'^trabalho/excluir/', views.trabalho_delete),
     url(r'^trabalho/show/(?P<username>\w+)/$', views.trabalho_show),
-    url(r'^login', views.login)
+    url(r'^login', views.login),
+    url(r'^recuperar_senha/', views.recuperar_senha),
+    url(r'^removerAtividade/', views.removerAtividade)
 ]
