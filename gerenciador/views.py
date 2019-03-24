@@ -297,9 +297,9 @@ def home(request):
     path = str(request.path)
     usuario = request.user
     if not request.session.get('perfil') == "Coordenador":
-        andamento = Trabalho.objects.filter(Q(tipo="Andamento",aluno=usuario.username)|Q(tipo="Andamento",professor=usuario.username))
-        pendente = Trabalho.objects.filter(Q(tipo="Pendente",aluno=usuario.username)|Q(tipo="Pendente",professor=usuario.username))
-        concluido = Trabalho.objects.filter(Q(tipo="Concluido",aluno=usuario.username)|Q(tipo="Concluido",professor=usuario.username))
+        andamento = Trabalho.objects.filter(Q(tipo="Andamento",aluno=usuario.ra)|Q(tipo="Andamento",professor=usuario.ra))
+        pendente = Trabalho.objects.filter(Q(tipo="Pendente",aluno=usuario.ra)|Q(tipo="Pendente",professor=usuario.ra))
+        concluido = Trabalho.objects.filter(Q(tipo="Concluido",aluno=usuario.ra)|Q(tipo="Concluido",professor=usuario.ra))
     else:
         andamento = Trabalho.objects.filter(tipo="Andamento")
         pendente = Trabalho.objects.filter(tipo="Pendente")
