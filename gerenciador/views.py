@@ -302,13 +302,13 @@ def home(request):
     try:
         usuario_real = Usuario.objects.filter(ra = request.user.username)
         if not request.session.get('perfil') == "Coordenador":
-            andamento = Trabalho.objects.filter(Q(tipo="Andamento",aluno=usuario_real)|Q(tipo="Andamento",professor=usuario_real))
-            pendente = Trabalho.objects.filter(Q(tipo="Pendente",aluno=usuario_real)|Q(tipo="Pendente",professor=usuario_real))
-            concluido = Trabalho.objects.filter(Q(tipo="Concluido",aluno=usuario_real)|Q(tipo="Concluido",professor=usuario_real))
+            andamento = Trabalho.objects.filter(Q(tipo__in="Andamento",aluno=usuario_real)|Q(tipo__in="Andamento",professor=usuario_real))
+            pendente = Trabalho.objects.filter(Q(tipo__in="Pendente",aluno=usuario_real)|Q(tipo__in="Pendente",professor=usuario_real))
+            concluido = Trabalho.objects.filter(Q(tipo__in="Concluido",aluno=usuario_real)|Q(tipo__in="Concluido",professor=usuario_real))
         else:
-            andamento = Trabalho.objects.filter(tipo="Andamento")
-            pendente = Trabalho.objects.filter(tipo="Pendente")
-            concluido = Trabalho.objects.filter(tipo="Concluido")
+            andamento = Trabalho.objects.filter(tipo__in="Andamento")
+            pendente = Trabalho.objects.filter(tipo__in="Pendente")
+            concluido = Trabalho.objects.filter(tipo__in="Concluido")
     except:
         pass
 
