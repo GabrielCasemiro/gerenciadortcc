@@ -111,9 +111,9 @@ def trabalho_show(request, username):
     meses_atividades = []
     if atividades:
         datas_atividades = Atividade.objects.filter(trabalho=username).values_list('data_inicio', flat=True).distinct()
-
+        datas_atividades_fim = Atividade.objects.filter(trabalho=username).values_list('data_final', flat=True).distinct()
         ## Calcula os meses das atividades ###
-        maximo_date = max(datas_atividades)
+        maximo_date = max(datas_atividades_fim)
         minimo = min(datas_atividades)
         meses_atividades = [minimo.strftime('%m/%Y')]
         from calendar import monthrange
@@ -296,14 +296,21 @@ def login(request):
 def home(request):
     path = str(request.path)
     usuario = request.user
-    if not request.session.get('perfil') == "Coordenador":
-        andamento = Trabalho.objects.filter(Q(tipo="Andamento",aluno=usuario.ra)|Q(tipo="Andamento",professor=usuario.ra))
-        pendente = Trabalho.objects.filter(Q(tipo="Pendente",aluno=usuario.ra)|Q(tipo="Pendente",professor=usuario.ra))
-        concluido = Trabalho.objects.filter(Q(tipo="Concluido",aluno=usuario.ra)|Q(tipo="Concluido",professor=usuario.ra))
-    else:
-        andamento = Trabalho.objects.filter(tipo="Andamento")
-        pendente = Trabalho.objects.filter(tipo="Pendente")
-        concluido = Trabalho.objects.filter(tipo="Concluido")
+    try:
+        usuario_real = Usuario.objects.filter(ra = request.user.username)
+        if not request.session.get('perfil') == "Coordenador":
+            andamento = Trabalho.objects.filter(Q(tipo="Andamento",aluno=usuario_real)|Q(tipo="Andamento",professor=usuario_real))
+            pendente = Trabalho.objects.filter(Q(tipo="Pendente",aluno=usuario_real)|Q(tipo="Pendente",professor=usuario_real))
+            concluido = Trabalho.objects.filter(Q(tipo="Concluido",aluno=usuario_real)|Q(tipo="Concluido",professor=usuario_real))
+        else:
+            andamento = Trabalho.objects.filter(tipo="Andamento")
+            pendente = Trabalho.objects.filter(tipo="Pendente")
+            concluido = Trabalho.objects.filter(tipo="Concluido")
+    except:
+        andamento = []
+        pendente = []
+        concluido = []
+
 
     return render(request, 'index.html', {"usuario": usuario,
         "path": path,
