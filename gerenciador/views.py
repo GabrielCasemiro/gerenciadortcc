@@ -296,6 +296,9 @@ def login(request):
 def home(request):
     path = str(request.path)
     usuario = request.user
+    andamento = []
+    pendente = []
+    concluido = []
     try:
         usuario_real = Usuario.objects.filter(ra = request.user.username)
         if not request.session.get('perfil') == "Coordenador":
@@ -307,9 +310,7 @@ def home(request):
             pendente = Trabalho.objects.filter(tipo="Pendente")
             concluido = Trabalho.objects.filter(tipo="Concluido")
     except:
-        andamento = []
-        pendente = []
-        concluido = []
+        pass
 
 
     return render(request, 'index.html', {"usuario": usuario,
