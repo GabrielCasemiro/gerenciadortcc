@@ -347,7 +347,7 @@ def home(request):
     usuario_real = Usuario.objects.filter(ra = request.user.username)
     try:
         if usuario_real != False:
-            if equest.session.get('perfil') == "Aluno":
+            if request.session.get('perfil') == "Aluno":
                 andamento = Trabalho.objects.filter(tipo="Andamento",aluno=usuario_real)
                 pendente = Trabalho.objects.filter(tipo="Pendente",aluno=usuario_real)
                 concluido = Trabalho.objects.filter(tipo="Concluido",aluno=usuario_real)
