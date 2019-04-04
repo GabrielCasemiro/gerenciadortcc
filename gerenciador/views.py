@@ -20,7 +20,7 @@ import unicodedata
 from django.http import HttpResponse
 import os
 
-from models import media_url_atividade
+from .models import media_url_atividade
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
