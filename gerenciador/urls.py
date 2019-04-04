@@ -28,6 +28,8 @@ urlpatterns = [
     url(r'^trabalho/edit/(?P<username>\w+)/$', views.trabalho_edit),
     url(r'^trabalho/excluir/', views.trabalho_delete),
     url(r'^trabalho/show/(?P<username>\w+)/$', views.trabalho_show),
+    url(r'^atualizar_entrega/(?P<id_entrega>\w+)/$', views.entrega_tarefa),
+    url(r'^download_entrega/(?P<id_entrega>\w+)/$', views.download_file),
     url(r'^login', views.login),
     url(r'^recuperar_senha/', views.recuperar_senha),
     url(r'^removerAtividade/', views.removerAtividade)

@@ -17,6 +17,12 @@ from django.core.mail import EmailMessage
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 import unicodedata
+from django.http import HttpResponse
+import os
+
+from models import media_url_atividade
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ############################################
 ##                                        ##
@@ -72,8 +78,12 @@ class TrabalhoForm(forms.ModelForm):
 class AtividadeForm(forms.ModelForm):
     class Meta:
         model = Atividade
-        fields = ['titulo','data_inicio','data_final','trabalho']
+        fields = ['titulo','arquivo','data_inicio','data_final','trabalho']
 
+class EntregaAtividadeForm(forms.ModelForm):
+    class Meta:
+        model = Atividade
+        fields = ['entrega']
 ############################################
 ##                                        ##
 ##             TRABALHOS                  ##
@@ -93,6 +103,7 @@ def trabalho_delete(request):
 def trabalho_show(request, username):
     usuario = request.user 
     path = "trabalho"
+    formulario_list = []
 
     trabalho = get_object_or_404(Trabalho, pk=int(username))
     if request.method == "POST":
@@ -100,29 +111,62 @@ def trabalho_show(request, username):
         dados_form = request.POST
         if form.is_valid():
             form.save()
-            mensagem_email = u"Uma nova atividade foi cadastrada no cronograma do TCC de seguinte título:"+trabalho.titulo+".\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+dados_form['titulo']+"\nData de Início: "+dados_form['data_inicio']+"\nData de Término: "+dados_form['data_final']+"\n\n"+"Acesse o sistema utilizando o link: "+"http://gerenciadortcc.pythonanywhere.com/login/"+"."
-            email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[trabalho.aluno.email, trabalho.professor.email])
-            email.send()
+            try:
+                mensagem_email = u"Uma nova atividade foi cadastrada no cronograma do TCC de seguinte título:"+trabalho.titulo+".\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+dados_form['titulo']+"\nData de Início: "+dados_form['data_inicio']+"\nData de Término: "+dados_form['data_final']+"\n\n"+"Acesse o sistema utilizando o link: "+"http://gerenciadortcc.pythonanywhere.com/login/"+"."
+                email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[trabalho.aluno.email, trabalho.professor.email])
+                email.send()
+            except:
+                print("Falha ao enviar o e-mail.")
             return redirect('/trabalho/show/' + username)
         else:
             return redirect('/index/')
+    else:
+        atividades = Atividade.objects.filter(trabalho=username).order_by("data_inicio")
+        meses_atividades = []
+        if atividades:
+            datas_atividades = Atividade.objects.filter(trabalho=username).values_list('data_inicio', flat=True).distinct()
+            datas_atividades_fim = Atividade.objects.filter(trabalho=username).values_list('data_final', flat=True).distinct()
+            ## Calcula os meses das atividades ###
+            maximo_date = max(datas_atividades_fim)
+            minimo = min(datas_atividades)
+            meses_atividades = [minimo.strftime('%m/%Y')]
+            from calendar import monthrange
 
-    atividades = Atividade.objects.filter(trabalho=username).order_by("data_inicio")
-    meses_atividades = []
-    if atividades:
-        datas_atividades = Atividade.objects.filter(trabalho=username).values_list('data_inicio', flat=True).distinct()
-        datas_atividades_fim = Atividade.objects.filter(trabalho=username).values_list('data_final', flat=True).distinct()
-        ## Calcula os meses das atividades ###
-        maximo_date = max(datas_atividades_fim)
-        minimo = min(datas_atividades)
-        meses_atividades = [minimo.strftime('%m/%Y')]
-        from calendar import monthrange
+            while minimo <= maximo_date:
+                minimo += timedelta(days=monthrange(minimo.year, minimo.month)[1])
+                meses_atividades.append( datetime(minimo.year, minimo.month, 1).strftime('%m/%Y') )
+        form = AtividadeForm()
 
-        while minimo <= maximo_date:
-            minimo += timedelta(days=monthrange(minimo.year, minimo.month)[1])
-            meses_atividades.append( datetime(minimo.year, minimo.month, 1).strftime('%m/%Y') )
-    return render(request, 'trabalho_show.html', {'trabalho':trabalho,'path':path,'usuario':usuario,'id':username,'atividades':atividades,'meses_atividades':meses_atividades})
+        atividades_entregas = atividades.filter(arquivo=True)
+        data_hoje = datetime.now().date()
+        return render(request, 'trabalho_show.html', {'form':form,'trabalho':trabalho,'path':path,'usuario':usuario,'id':username,'atividades':atividades,'meses_atividades':meses_atividades,'atividades_entregas':atividades_entregas,'data_hoje':data_hoje})
 
+def download_file(request, id_entrega):
+    atividade = get_object_or_404(Atividade, pk=id_entrega)
+    link = os.path.join(BASE_DIR, 'media')
+    response = HttpResponse(open(media_url_atividade+atividade.entrega.url, 'rb').read())
+    response['Content-Type'] = 'text/plain'
+    response['Content-Disposition'] = 'attachment; filename=' + str(atividade.entrega.name)
+    return response
+def entrega_tarefa(request, id_entrega):
+    if request.method == "POST":
+        atividade = get_object_or_404(Atividade, pk=id_entrega)
+        file = request.FILES["entrega"]
+        if file and atividade:
+            atividade.entrega = file
+            atividade.save()
+            try:
+                mensagem_email = u"Uma entrega de uma atividade foi realizada.\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+atividade.titulo+"\nData de Início: "+atividade.data_inicio+"\nData final: "+atividade.data_final+"\n\n"+"Acesse o sistema utilizando o link: "+"http://gerenciadortcc.pythonanywhere.com/login/"+"."
+                email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[atividade.trabalho.aluno.email, atividade.trabalho.professor.email])
+                email.send()
+            except:
+                print("Falha ao enviar o e-mail.")
+            link = '/trabalho/show/' + str(atividade.trabalho.id) + '/'
+            return redirect(link)
+        else:
+            return redirect('/index/')
+    else:
+        return redirect('/index/')
 def trabalho_edit(request, username): 
     instance = get_object_or_404(Trabalho, pk=username)
     if request.method == "POST":

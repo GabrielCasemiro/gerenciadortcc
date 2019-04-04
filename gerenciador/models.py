@@ -4,6 +4,8 @@ from django.db import models
 from django.core.validators import MaxValueValidator
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
+from django.core.validators import FileExtensionValidator
+media_url_atividade = '/home/gabriel/Desktop/TCC/tcc/gerenciador'
 ESCOLHA_PERFIL = (
     ('Aluno', 'Aluno'),
     ('Professor', 'Professor'),
@@ -43,8 +45,9 @@ class Atividade(models.Model):
     titulo = models.CharField(max_length=150,default='',help_text="Título da Atividade")
     data_inicio = models.DateField(help_text="Data de início da atividade")
     data_final = models.DateField(help_text="Data final da entrega da Atividade")
+    arquivo = models.BooleanField(default=False,help_text="Atividade terá entrega")
     trabalho = models.ForeignKey(Trabalho,related_name='Trabalho',on_delete=models.CASCADE)
-    entrega = models.FileField(upload_to='entregas/')
+    entrega = models.FileField(blank=True, null=True,validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
     def range(self):
         datas = []
         diferenca = self.data_final.month - self.data_inicio.month

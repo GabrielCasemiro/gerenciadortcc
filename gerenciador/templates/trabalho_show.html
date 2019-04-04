@@ -49,7 +49,7 @@
           <tr>
 
             <th scope="col">Atividade</th>
-             {% for mes in meses_atividades %}
+            {% for mes in meses_atividades %}
             <th>{{mes}}</th>
 
             {% endfor %}
@@ -61,7 +61,7 @@
 
             <th scope="row">{{ atividade.titulo }}{%if request.session.perfil == "Professor" or  request.session.perfil == "Coordenador" %}  <button class="btn btn btn-outline-danger btn-sm" title="Remover Atividade" onclick="removerAtividade({{atividade.id}})"><i class="fa fa-remove"></i></button>{%endif%}</th>
             {% for mes in meses_atividades %}
-              <td  {%if mes in atividade.data_mes_ano %} class="bg-primary text-white" {% endif %}></td>
+            <td  {%if mes in atividade.data_mes_ano %} class="bg-primary text-white" {% endif %}></td>
             {% endfor %}
 
 
@@ -85,10 +85,53 @@
     </button>
     {% endif %}
     <div id="form"></div>
-  </div>
-</div>
-</div>
+    {%if atividades%}
+    <hr>
+    <h5 class="card-title">Entrega de atividades</h5>
 
+    {%if atividades_entregas%}
+
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">Atividade</th>
+          <th scope="col">Data Final</th>
+          <th scope="col">Entrega</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%for atividade in atividades_entregas%}
+        <tr>
+          <th scope="row">{{atividade.titulo}}</th>
+          <td>{{atividade.data_final}}</td>
+          <td>
+            {%if atividade.entrega%}
+            <a href="/download_entrega/{{atividade.id}}" class="text-primary">{{atividade.entrega}}</a>
+            {%else%}
+            Não há entrega nessa atividade.
+            {%endif%}
+            {% ifequal request.session.perfil "Aluno" %}
+            {%if data_hoje <= atividade.data_final %} 
+            <form action="/atualizar_entrega/{{atividade.id}}/"  enctype="multipart/form-data" method="POST"> {% csrf_token %}
+             <input type="file" name="entrega" required id="id_entrega" /> <button type="submit" class="btn btn-primary" > Salvar </button> 
+             {%else%}
+             Tarefa atrasada.
+             {%endif%}
+             {%endifequal%}
+           </form>
+           <td>
+           </tr>
+           {%endfor%}
+         </tbody>
+       </table>
+       {% else %}
+       <p>Ainda não há atividades com entregas cadastradas para esse trabalho.</p>
+       {% endif %}
+       {%endif%}
+     </div>
+   </div>
+ </div>
 </div>
 <!--/.Card-->
 </div>
@@ -105,25 +148,25 @@
   var adicionar = 0;
   $("#adicionar").click(function(){
     if(adicionar == 0){
-      var formulario = '<form action="/trabalho/show/{{id}}/" method="POST">'+"{% csrf_token %}"+'<div class="row"> <div class="col-12 col-md-6"> <div id="div_id_titulo" class="form-group"> <label for="id_titulo" class="col-form-label  requiredField">Titulo<span class="asteriskField">*</span> </label> <div class=""> <input type="text" name="titulo" id="id_titulo" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_id_titulo" class="form-text text-muted">Título do Trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_inicial" class="form-group"> <label for="data_inicial" class="col-form-label  requiredField">Data Inicial<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_inicio" id="data_inicial" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_inicial" class="form-text text-muted">Data inicial do trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_final" class="form-group"> <label for="data_final" class="col-form-label  requiredField">Data Final<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_final" id="data_final" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_final" class="form-text text-muted">Data final do trabalho</small> </div> </div> </div><input type="text" name="trabalho" id="id_trabalho" required class="textinput textInput form-control"value="{{id}}" hidden/>  <div class="col-12 col-md-6 mt-3"> <button type="submit" class="btn btn-primary btn-block"> Salvar </button> </div> </div> </form>'
+      var formulario = '<form action="/trabalho/show/{{id}}/" method="POST">'+"{% csrf_token %}"+'<div class="row"> <div class="col-12 col-md-6"> <div id="div_id_titulo" class="form-group"> <label for="id_titulo" class="col-form-label  requiredField">Titulo<span class="asteriskField">*</span> </label> <div class=""> <input type="text" name="titulo" id="id_titulo" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_id_titulo" class="form-text text-muted">Título do Trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_inicial" class="form-group"> <label for="data_inicial" class="col-form-label  requiredField">Data Inicial<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_inicio" id="data_inicial" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_inicial" class="form-text text-muted">Data inicial do trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_final" class="form-group"> <label for="data_final" class="col-form-label  requiredField">Data Final<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_final" id="data_final" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_final" class="form-text text-muted">Data final do trabalho</small> </div> </div> </div>  <div class="custom-control custom-checkbox mt-5"> <input type="checkbox" class="custom-control-input" id="id_arquivo" name="arquivo"> <label class="custom-control-label" for="id_arquivo">Atividade tem entrega</label> </div><input type="text" name="trabalho" id="id_trabalho" required class="textinput textInput form-control"value="{{id}}" hidden/>  <div class="col-12 col-md-12 mt-3"> <button type="submit" class="btn btn-primary btn-block h2"> Salvar </button> </div> </div> </form>'
       $("#form").append(formulario);
     }
     adicionar = 1;
   });
 
   function removerAtividade(id_atividade){
-     $.ajax({
-         type:"POST",
-         url:"/removerAtividade/",
-         data: {csrfmiddlewaretoken:'{{ csrf_token }}', id_atividade:id_atividade},
+   $.ajax({
+     type:"POST",
+     url:"/removerAtividade/",
+     data: {csrfmiddlewaretoken:'{{ csrf_token }}', id_atividade:id_atividade},
 
-         success: function(data){
-             alert(data.mensagem);
-             location.href = location.href;
+     success: function(data){
+       alert(data.mensagem);
+       location.href = location.href;
 
-         },
-     });
-  }
+     },
+   });
+ }
 
 </script>
 {% endblock %}        
