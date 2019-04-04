@@ -20,7 +20,7 @@ import unicodedata
 from django.http import HttpResponse
 import os
 
-from models import media_url_atividade
+from .models import media_url_atividade  
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -345,17 +345,22 @@ def home(request):
     concluido = []
     usuario_real = False
     usuario_real = Usuario.objects.filter(ra = request.user.username)
-    if usuario_real != False:
-        if not request.session.get('perfil') == "Coordenador":
-            andamento = Trabalho.objects.filter(Q(tipo="Andamento",aluno=usuario_real)|Q(tipo="Andamento",professor=usuario_real))
-            pendente = Trabalho.objects.filter(Q(tipo="Pendente",aluno=usuario_real)|Q(tipo="Pendente",professor=usuario_real))
-            concluido = Trabalho.objects.filter(Q(tipo="Concluido",aluno=usuario_real)|Q(tipo="Concluido",professor=usuario_real))
-        else:
-            andamento = Trabalho.objects.filter(tipo="Andamento")
-            pendente = Trabalho.objects.filter(tipo="Pendente")
-            concluido = Trabalho.objects.filter(tipo="Concluido")
-
-
+    try:
+        if usuario_real != False:
+            if equest.session.get('perfil') == "Aluno":
+                andamento = Trabalho.objects.filter(tipo="Andamento",aluno=usuario_real)
+                pendente = Trabalho.objects.filter(tipo="Pendente",aluno=usuario_real)
+                concluido = Trabalho.objects.filter(tipo="Concluido",aluno=usuario_real)
+            elif request.session.get('perfil') == "Professor":
+                andamento = Trabalho.objects.filter(tipo="Andamento",professor=usuario_real)
+                pendente = Trabalho.objects.filter(tipo="Pendente",professor=usuario_real)
+                concluido = Trabalho.objects.filter(tipo="Concluido",professor=usuario_real)
+            else:
+                andamento = Trabalho.objects.filter(tipo="Andamento")
+                pendente = Trabalho.objects.filter(tipo="Pendente")
+                concluido = Trabalho.objects.filter(tipo="Concluido")
+    except:
+        pass
 
     return render(request, 'index.html', {"usuario": usuario,
         "path": path,
