@@ -356,13 +356,12 @@ def home(request):
         if usuario_real != False:
             if request.session.get('perfil') == "Aluno":
                 andamento = andamento.filter(aluno=usuario_real)
-                pendente = Trabalho.objects.filter(tipo="Pendente",aluno=usuario_real)
-                concluido = Trabalho.objects.filter(tipo="Concluido",aluno=usuario_real)
+                pendente = pendente.filter(aluno=usuario_real)
+                concluido = concluido.filter(aluno=usuario_real)
             elif request.session.get('perfil') == "Professor":
-                andamento = Trabalho.objects.filter(tipo="Andamento",professor=usuario_real)
-                pendente = Trabalho.objects.filter(tipo="Pendente",professor=usuario_real)
-                concluido = Trabalho.objects.filter(tipo="Concluido",professor=usuario_real)
-
+                andamento = andamento.filter(aluno=usuario_real)
+                pendente = pendente.filter(aluno=usuario_real)
+                concluido = concluido.filter(aluno=usuario_real)
     except:
         pass
 
