@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login as auth_login
 from django.http import HttpResponseRedirect
 from django.db import models
-from django.forms import ModelForm, ModelChoiceField, Textarea
+from django.forms import ModelForm, ModelMultipleChoiceField, ModelChoiceField, Textarea
 from django.shortcuts import redirect
 from .models import *
 from django import forms
@@ -56,7 +56,7 @@ class UserForm(forms.ModelForm):
         fields = ['username','ra','password','email','perfil']
         labels = {
         "username": "Nome Completo",
-        "ra":"RA",
+        "ra":"RA/Matrícula",
         "password": "Senha",
         "email":"E-mail",
         "perfil":"Perfil de Acesso"
@@ -88,11 +88,99 @@ class EntregaAtividadeForm(forms.ModelForm):
     class Meta:
         model = Atividade
         fields = ['entrega']
+class UserModelChoiceFieldMultiple(ModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        return obj.username
+
+class DateInput(forms.DateInput):
+    input_type = 'date'  
+
+class TCCModelChoiceField(ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.titulo
+
+class AtaForm(forms.ModelForm):
+    avaliadores = UserModelChoiceFieldMultiple(queryset=Usuario.objects.filter(perfil="Professor"),required=False)
+    tcc = TCCModelChoiceField(queryset=Trabalho.objects.all(),required=True)
+    class Meta:
+        model = Ata
+        fields = ['tcc','data','avaliadores']
+        widgets = {
+            'data': DateInput()
+        }
+
+
+############################################
+##                                        ##
+##             ATAS                       ##
+##                                        ##
+############################################
+def show_atas(request):
+    path = str(request.path)
+    usuario = request.user
+    usuario_real = False
+    usuario_real = Usuario.objects.filter(ra = request.user.username)
+    atas = Ata.objects.all()
+
+    # try:
+    #     if usuario_real != False:
+    #         if request.session.get('perfil') == "Aluno":
+    #             atas = andamento.filter(aluno=usuario_real)
+    #         elif request.session.get('perfil') == "Professor":
+    #             atas = andamento.filter(aluno=usuario_real)
+    # except:
+    #     pass
+
+    return render(request, 'show_atas.html', {"usuario": usuario, "path": path,"atas":atas})
+
+def atas_add(request):
+    path = str(request.path)
+    form = AtaForm()
+    usuario = request.user
+    if request.method == "POST":
+        teste = request.POST.copy() 
+        f = AtaForm(teste)
+        if teste['avaliadores'] != '':
+            if f.is_valid():
+                f.save()
+                ## ENVIO DE EMAILS ###
+                import pdb;pdb.set_trace()
+                try:
+                    trabalho = Trabalho.objects.get(id=teste['tcc'])
+                    avaliadores = Usuario.objects.filter(username__contains = teste['avaliadores'])
+                    avaliadores = avaliadores.values_list('email', flat=True)
+                    avaliadores_emails = ','.join([str(i) for i in avaliadores])
+                    mensagem_email = "\n\nUma ata foi cadastrado no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: " + link_site + "."
+                    email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[trabalho.aluno.email, trabalho.professor.email,avaliadores_emails])
+                    email.send()
+                except:
+                    pass
+                response = redirect('/show_atas/')
+                return response
+            else:
+                form = AtaForm(teste)
+        else:
+            return render(request, 'error.html', {'mensagem':"Selecione ao menos 1 avaliador."})
+    titulo = "Adicionar Ata"
+    link = "/ata/add/"
+    return render(request, 'model_form.html', {"usuario":usuario,"form":form,"path": path,"titulo":titulo,"link":link})
+
+def ata_delete(request):
+    name = request.POST.get('username','')
+    if request.method == "POST":
+        if name:
+            try:
+                Ata.objects.filter(pk=name).delete()
+            except:
+                pass
+    return redirect('/show_atas/')
+
 ############################################
 ##                                        ##
 ##             TRABALHOS                  ##
 ##                                        ##
 ############################################
+
 
 def trabalho_delete(request):
     name = request.POST.get('username','')
@@ -152,23 +240,33 @@ def download_file(request, id_entrega):
     response['Content-Type'] = 'text/plain'
     response['Content-Disposition'] = 'attachment; filename=' + str(atividade.entrega.name)
     return response
+
+def pagina_erro(request,mensagem):
+    return render(request, 'error.html', {'mensagem':mensagem}) 
+
 def entrega_tarefa(request, id_entrega):
     if request.method == "POST":
         atividade = get_object_or_404(Atividade, pk=id_entrega)
         file = request.FILES["entrega"]
         if file and atividade:
-            atividade.entrega = file
-            atividade.save()
-            try:
-                mensagem_email = u"Uma entrega de uma atividade foi realizada.\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+atividade.titulo+"\nData de Início: "+atividade.data_inicio+"\nData final: "+atividade.data_final+"\n\n"+"Acesse o sistema utilizando o link: "+"http://gerenciadortcc.pythonanywhere.com/login/"+"."
-                email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[atividade.trabalho.aluno.email, atividade.trabalho.professor.email])
-                email.send()
-            except:
-                print("Falha ao enviar o e-mail.")
-            link = '/trabalho/show/' + str(atividade.trabalho.id) + '/'
-            return redirect(link)
+            if file.size <= 83886080:
+                if file.content_type == u'application/pdf':
+                    atividade.entrega = file
+                    atividade.save()
+                    try:
+                        mensagem_email = u"Uma entrega de uma atividade foi realizada.\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+atividade.titulo+"\nData de Início: "+atividade.data_inicio+"\nData final: "+atividade.data_final+"\n\n"+"Acesse o sistema utilizando o link: "+"http://gerenciadortcc.pythonanywhere.com/login/"+"."
+                        email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[atividade.trabalho.aluno.email, atividade.trabalho.professor.email])
+                        email.send()
+                    except:
+                        print("Falha ao enviar o e-mail.")
+                    link = '/trabalho/show/' + str(atividade.trabalho.id) + '/'
+                    return redirect(link)
+                else:
+                    return render(request, 'error.html', {'mensagem':" O arquivo de entrega da atividade deve ser do tipo pdf."})
+            else:
+                return render(request, 'error.html', {'mensagem':"O arquivo de entrega da atividade deve ter menos de 10 MB."})
         else:
-            return redirect('/index/')
+             return render(request, 'error.html', {'mensagem':"Atividade ou arquivo de entrega não encontrado."})
     else:
         return redirect('/index/')
 def trabalho_edit(request, username): 
@@ -299,7 +397,7 @@ def removerAtividade(request):
 def recuperar_senha(request):
     if request.method == "POST":
         username = request.POST.get('ra','')
-        mensagem = "Usuário não encontrado! Verifique o RA e tente novamente."
+        mensagem = "Usuário não encontrado! Verifique o RA/Matrícula e tente novamente."
         usuario = False
         try:
             usuario = get_object_or_404(Usuario, ra=int(username))
@@ -349,10 +447,10 @@ def home(request):
     concluido = []
     usuario_real = False
     usuario_real = Usuario.objects.filter(ra = request.user.username)
+    andamento = Trabalho.objects.all().filter(tipo="Andamento")
+    pendente = Trabalho.objects.all().filter(tipo="Pendente")
+    concluido = Trabalho.objects.all().filter(tipo="Concluido")
     try:
-        andamento = Trabalho.objects.filter(tipo="Andamento")
-        pendente = Trabalho.objects.filter(tipo="Pendente")
-        concluido = Trabalho.objects.filter(tipo="Concluido")
         if usuario_real != False:
             if request.session.get('perfil') == "Aluno":
                 andamento = andamento.filter(aluno=usuario_real)
@@ -365,11 +463,7 @@ def home(request):
     except:
         pass
 
-    return render(request, 'index.html', {"usuario": usuario,
-        "path": path,
-        "andamento":andamento,
-        "pendente":pendente,
-        "concluido":concluido})
+    return render(request, 'index.html', {"usuario": usuario, "path": path,"andamento":andamento,"pendente":pendente,"concluido":concluido})
 
 def logout_act(request):
     logout(request)

@@ -18,7 +18,7 @@
         </h4>
         {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
         <a href="/trabalho/add/">
-            <button class="btn btn-primary btn-sm my-0 p" type="submit">
+            <button class="btn btn-primary btn-sm my-0 p" type="submit" onclick="showLoader()">
                 <i class="fa fa-plus"></i>
                 Novo trabalho
             </button>
@@ -73,14 +73,14 @@
                                 <td>
                                   <a href="/trabalho/show/{{ tcc.pk }}">
                                     <span data-toggle="modal" data-target="#modalLRFormDemo">
-                                        <button data-toggle="tooltip" data-placement="top" title="Visualizar" class="btn text-white btn-info botao click ">
+                                        <button data-toggle="tooltip" data-placement="top" title="Visualizar" class="btn text-white btn-info botao click " onclick="showLoader()">
                                             <i class="fa fa-eye"></i>
                                         </button>
                                     </span>
                                 </a>
                                  {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
                                 <a class="text-white" href="/trabalho/edit/{{ tcc.pk }}">
-                                    <button type="submit" data-toggle="tooltip" data-placement="top" title="Editar" class="btn btn-primary  botao click">
+                                    <button type="submit" data-toggle="tooltip" data-placement="top" title="Editar" class="btn btn-primary  botao click" onclick="showLoader()">
                                         <i class="fa fa-edit"></i>
                                     </button>
                                 </a>
@@ -88,7 +88,7 @@
                                 <form method="POST" id="formExcluir" action="/trabalho/excluir/">{% csrf_token %}
                                     <input type="text" name="username" value="{{tcc.pk}}" hidden>
                                     <span data-toggle="modal" data-target="#modalLRFormDemo">
-                                        <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir">
+                                        <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir" onclick="showLoader()">
                                             <i class="fa fa-trash"  ></i>
                                         </button>
                                     </span>

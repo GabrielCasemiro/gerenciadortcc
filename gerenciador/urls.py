@@ -20,6 +20,9 @@ from . import views
 urlpatterns = [
     url(r'^logout', views.logout_act),
     url(r'^index', views.home),
+    url(r'^show_atas/', views.show_atas),
+    url(r'^ata/add/', views.atas_add),
+    url(r'^ata/excluir/', views.ata_delete),
     url(r'^usuario/list/', views.usuario_list),
     url(r'^usuario/add/', views.usuario_add),
     url(r'^usuario/excluir/', views.usuario_delete),

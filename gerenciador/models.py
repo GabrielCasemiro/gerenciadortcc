@@ -17,6 +17,16 @@ ESCOLHA_TRABALHO = (
     ('Pendente', 'Pendente'),
     ('Concluido', 'Concluido')
     )
+from django.core.exceptions import ValidationError
+
+
+def validate_file_size(value):
+    filesize= value.size
+    
+    if filesize > 10485760:
+        raise ValidationError("The maximum file size that can be uploaded is 10MB")
+    else:
+        return value
 
 class Usuario(models.Model):
     username = models.CharField(primary_key=True, max_length=150,default='')
@@ -28,7 +38,9 @@ class Usuario(models.Model):
         choices=ESCOLHA_PERFIL,
         default='Aluno'
     )
-    
+
+
+
 class Trabalho(models.Model):
     titulo = models.CharField(max_length=150,default='',help_text="Título do Trabalho")
     descricao = models.CharField(max_length=30000,default='',help_text="Descrição do Trabalho")
@@ -47,7 +59,7 @@ class Atividade(models.Model):
     data_final = models.DateField(help_text="Data final da entrega da Atividade")
     arquivo = models.BooleanField(default=False,help_text="Atividade terá entrega")
     trabalho = models.ForeignKey(Trabalho,related_name='Trabalho',on_delete=models.CASCADE)
-    entrega = models.FileField(blank=True, null=True,validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
+    entrega = models.FileField(blank=True, null=True, validators=[validate_file_size])
     def range(self):
         datas = []
         diferenca = self.data_final.month - self.data_inicio.month
@@ -66,3 +78,7 @@ class Atividade(models.Model):
             meses_atividades.append(datetime(minimo.year, minimo.month, 1).strftime('%m/%Y') )
         return meses_atividades
 
+class Ata(models.Model):
+    tcc = models.ForeignKey(Trabalho, related_name='TCC')
+    data = models.DateTimeField(help_text="Data da apresentação",default=datetime.now())
+    avaliadores = models.ManyToManyField(Usuario, related_name='Avaliador')
