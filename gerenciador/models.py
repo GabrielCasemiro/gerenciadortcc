@@ -32,7 +32,7 @@ class Usuario(models.Model):
     username = models.CharField(primary_key=True, max_length=150,default='')
     email = models.EmailField(max_length=254,default='')
     password = models.CharField(max_length=150,default='')
-    ra = models.PositiveIntegerField(validators=[MaxValueValidator(999999)],default='',unique = True)
+    ra = models.PositiveIntegerField(default='',unique = True)
     perfil = models.CharField(
         max_length=20,
         choices=ESCOLHA_PERFIL,
@@ -58,6 +58,7 @@ class Atividade(models.Model):
     data_inicio = models.DateField(help_text="Data de início da atividade")
     data_final = models.DateField(help_text="Data final da entrega da Atividade")
     arquivo = models.BooleanField(default=False,help_text="Atividade terá entrega")
+    aprovado = models.BooleanField(default=False, help_text="Aprovação")
     trabalho = models.ForeignKey(Trabalho,related_name='Trabalho',on_delete=models.CASCADE)
     entrega = models.FileField(blank=True, null=True, validators=[validate_file_size])
     def range(self):
@@ -79,6 +80,11 @@ class Atividade(models.Model):
         return meses_atividades
 
 class Ata(models.Model):
-    tcc = models.ForeignKey(Trabalho, related_name='TCC')
-    data = models.DateTimeField(help_text="Data da apresentação",default=datetime.now())
+    tcc = models.ForeignKey(Trabalho, related_name='TCC',help_text="TCC em Andamento",blank=True, null=True)
+    data = models.DateTimeField(help_text="Data da Defesa",default=datetime.now())
+    hora = models.TimeField(null=True,blank=True)
+    monografia = models.ForeignKey(Atividade,blank=True, null=True)
+    aprovado = models.BooleanField(default=False, help_text="Aprovação")
+    entrega = models.FileField(blank=True, null=True)
     avaliadores = models.ManyToManyField(Usuario, related_name='Avaliador')
+    observacoes = models.TextField(default='',help_text="Observações da Defesa", blank=True, null=True)

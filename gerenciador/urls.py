@@ -20,9 +20,12 @@ from . import views
 urlpatterns = [
     url(r'^logout', views.logout_act),
     url(r'^index', views.home),
-    url(r'^show_atas/', views.show_atas),
-    url(r'^ata/add/', views.atas_add),
-    url(r'^ata/excluir/', views.ata_delete),
+    url(r'^show_defesas/', views.show_atas),
+    url(r'^defesa/add/', views.atas_add),
+    url(r'^certificado/', views.certificado),
+    url(r'^defesa/excluir/', views.ata_delete),
+    url(r'^defesa/show/(?P<pk>\w+)/$', views.defesa_show),
+    url(r'^resultado_defesa/(?P<pk>\w+)/$', views.resultado_defesa),
     url(r'^usuario/list/', views.usuario_list),
     url(r'^usuario/add/', views.usuario_add),
     url(r'^usuario/excluir/', views.usuario_delete),
@@ -33,7 +36,11 @@ urlpatterns = [
     url(r'^trabalho/show/(?P<username>\w+)/$', views.trabalho_show),
     url(r'^atualizar_entrega/(?P<id_entrega>\w+)/$', views.entrega_tarefa),
     url(r'^download_entrega/(?P<id_entrega>\w+)/$', views.download_file),
+    url(r'^download_ata/(?P<pk>\w+)/$', views.download_ata),
     url(r'^login', views.login),
     url(r'^recuperar_senha/', views.recuperar_senha),
-    url(r'^removerAtividade/', views.removerAtividade)
+    url(r'^removerAtividade/', views.removerAtividade),
+    url(r'^aprovarAtividade/', views.aprovarAtividade),
+    url(r'^selecionarDefesa/', views.selecionarDefesa),
+    url(r'^reprovarAtividade/(?P<pk>\w+)/$', views.reprovarAtividade)
 ]

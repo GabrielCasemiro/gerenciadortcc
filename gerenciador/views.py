@@ -20,7 +20,9 @@ import unicodedata
 from django.http import HttpResponse
 import os
 
-
+import io
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
 
 
 from .models import media_url_atividade  
@@ -88,6 +90,7 @@ class EntregaAtividadeForm(forms.ModelForm):
     class Meta:
         model = Atividade
         fields = ['entrega']
+
 class UserModelChoiceFieldMultiple(ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         return obj.username
@@ -95,17 +98,27 @@ class UserModelChoiceFieldMultiple(ModelMultipleChoiceField):
 class DateInput(forms.DateInput):
     input_type = 'date'  
 
+class  TimeInput(forms.DateInput):
+    input_type = 'time'  
+
 class TCCModelChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
         return obj.titulo
 
 class AtaForm(forms.ModelForm):
     avaliadores = UserModelChoiceFieldMultiple(queryset=Usuario.objects.filter(perfil="Professor"),required=False)
-    tcc = TCCModelChoiceField(queryset=Trabalho.objects.all(),required=True)
+    tcc = TCCModelChoiceField(queryset=Trabalho.objects.filter(tipo='Andamento'),required=True)
     class Meta:
         model = Ata
-        fields = ['tcc','data','avaliadores']
+        fields = ['tcc','data','hora','avaliadores','observacoes']
+        labels = {
+        "tcc": "TCC em Andamento",
+        "data":"Data da Defesa",
+        "avaliadores": "Avaliadores",
+        "observacoes":"Observações"
+        }
         widgets = {
+            'hora':TimeInput(),
             'data': DateInput()
         }
 
@@ -115,6 +128,34 @@ class AtaForm(forms.ModelForm):
 ##             ATAS                       ##
 ##                                        ##
 ############################################
+
+def gerar_certificado(usuario,defesa):
+    buffer = io.BytesIO()
+
+    p = canvas.Canvas(buffer)
+
+    mensagem = "Certifico a participação do integrante %s na defesa do TCC %s no dia %s." % (usuario.username, defesa.tcc.titulo, defesa.data)
+    p.drawString(100, 100, mensagem)
+
+    p.showPage()
+    p.save()
+
+    return FileResponse(buffer, as_attachment=True, filename='hello.pdf')
+
+def certificado(request):
+    if request.method == "POST":
+        usuario = request.POST.get('usuario')
+        defesa = request.POST.get('defesa','')
+        try:
+            usuario_obj = get_object_or_404(Usuario, pk=int(atividade))
+            defesa_obj = get_object_or_404(Ata, pk=int(usuario))
+        except:
+            return render(request, 'error.html', {'mensagem':"Erro ao selecionar o usuário ou a defesa. Entre em contato com os administradores."})
+        if usuario_obj and defesa_obj:
+            return gerar_certificado(usuario_obj, defesa_obj)
+    else:
+        return redirect('/index/')
+
 def show_atas(request):
     path = str(request.path)
     usuario = request.user
@@ -122,14 +163,14 @@ def show_atas(request):
     usuario_real = Usuario.objects.filter(ra = request.user.username)
     atas = Ata.objects.all()
 
-    # try:
-    #     if usuario_real != False:
-    #         if request.session.get('perfil') == "Aluno":
-    #             atas = andamento.filter(aluno=usuario_real)
-    #         elif request.session.get('perfil') == "Professor":
-    #             atas = andamento.filter(aluno=usuario_real)
-    # except:
-    #     pass
+    try:
+        if usuario_real != False:
+            if request.session.get('perfil') == "Aluno":
+                atas = andamento.filter(aluno=usuario_real)
+            elif request.session.get('perfil') == "Professor":
+                atas = andamento.filter(aluno=usuario_real)
+    except:
+        pass
 
     return render(request, 'show_atas.html', {"usuario": usuario, "path": path,"atas":atas})
 
@@ -144,25 +185,24 @@ def atas_add(request):
             if f.is_valid():
                 f.save()
                 ## ENVIO DE EMAILS ###
-                import pdb;pdb.set_trace()
                 try:
                     trabalho = Trabalho.objects.get(id=teste['tcc'])
                     avaliadores = Usuario.objects.filter(username__contains = teste['avaliadores'])
                     avaliadores = avaliadores.values_list('email', flat=True)
                     avaliadores_emails = ','.join([str(i) for i in avaliadores])
-                    mensagem_email = "\n\nUma ata foi cadastrado no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: " + link_site + "."
+                    mensagem_email = "\n\nUma defesa de um TCC foi cadastrada no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: " + link_site + "."
                     email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[trabalho.aluno.email, trabalho.professor.email,avaliadores_emails])
                     email.send()
                 except:
                     pass
-                response = redirect('/show_atas/')
+                response = redirect('/show_defesas/')
                 return response
             else:
                 form = AtaForm(teste)
         else:
             return render(request, 'error.html', {'mensagem':"Selecione ao menos 1 avaliador."})
-    titulo = "Adicionar Ata"
-    link = "/ata/add/"
+    titulo = "Adicionar Defesa"
+    link = "/defesa/add/"
     return render(request, 'model_form.html', {"usuario":usuario,"form":form,"path": path,"titulo":titulo,"link":link})
 
 def ata_delete(request):
@@ -173,7 +213,79 @@ def ata_delete(request):
                 Ata.objects.filter(pk=name).delete()
             except:
                 pass
-    return redirect('/show_atas/')
+    return redirect('/show_defesas/')
+
+def defesa_show(request, pk):
+    usuario = request.user
+    path = 'defesa'
+    defesa = get_object_or_404(Ata, pk=int(pk))
+
+    atividades = Atividade.objects.filter(trabalho=Trabalho.objects.filter(pk=defesa.tcc.pk), aprovado=True)
+    integrantes = list(defesa.avaliadores.all())
+    integrantes.append(defesa.tcc.aluno)
+    integrantes.append(defesa.tcc.professor)
+    integrantes = list(set(list(integrantes)))
+
+    return render(request, 'defesa_show.html', {'defesa':defesa,'path':path,'usuario':usuario,'atividades':atividades,'integrantes':integrantes})
+
+def resultado_defesa(request, pk):
+    usuario = request.user
+    path = 'defesa'
+    defesa = get_object_or_404(Ata, pk=int(pk))
+    if defesa.monografia:
+        if request.method == "POST":
+            aprovado = request.POST.get('aprovado','')
+            if aprovado != '':
+                defesa.aprovado = aprovado
+                if request.FILES:
+                    uploaded_file = request.FILES['file']
+                    defesa.entrega =  uploaded_file
+                defesa.save()
+                trabalho = Trabalho.objects.get(id=defesa.tcc.id)
+                trabalho.tipo = 'Concluido'
+                trabalho.save()
+                return redirect('/defesa/show/'+str(defesa.id)+'/')
+            else:
+                return render(request, 'error.html', {'mensagem':"Preencha todos os campos para submeter o resultado."})
+        return render(request, 'resultado_defesa.html', {'defesa':defesa,'path':path,'usuario':usuario})
+    else:
+        return render(request, 'error.html', {'mensagem':"Defesa sem monografia cadastrada."})
+
+
+    
+
+def selecionarDefesa(request):
+    if request.method == "POST":
+        atividade = request.POST.get('atividade')
+        defesa = request.POST.get('defesa','')
+        try:
+            atividade_obj = get_object_or_404(Atividade, pk=int(atividade))
+            defesa_obj = get_object_or_404(Ata, pk=int(defesa))
+        except:
+            return render(request, 'error.html', {'mensagem':"Erro ao selecionar a atividade ou a defesa. Entre em contato com os administradores."})
+        if atividade_obj and defesa_obj:
+            defesa_obj.monografia = atividade_obj
+            defesa_obj.save()
+            ### ENVIO DE E-MAIL ###
+            trabalho = Trabalho.objects.get(id=defesa_obj.tcc.id)
+            avaliadores_emails = ','.join([str(avaliador.email) for avaliador in defesa_obj.avaliadores.all()])
+            mensagem = """A monografia do TCC %s foi cadastrada com sucesso no Sistema Gerenciador de TCC.\n\n
+Informações sobre a defesa:\n
+Data: %s\n
+Observações: %s
+\n\n
+Acesse o sistema utilizando o link: %s.""" % (trabalho.titulo, defesa_obj.data.strftime('%d/%m/%Y'), defesa_obj.observacoes, link_site)
+
+            email = EmailMessage('Sistema Gerenciador de TCC', mensagem, to=[trabalho.aluno.email, trabalho.professor.email, avaliadores_emails])
+            
+            ## ANEXO DA ATIVIDADE ##
+            email.attach_file(atividade_obj.entrega.path)
+            
+            email.send()
+
+        return redirect('/defesa/show/'+defesa+'/')
+    else:
+        return redirect('/index/')
 
 ############################################
 ##                                        ##
@@ -241,8 +353,14 @@ def download_file(request, id_entrega):
     response['Content-Disposition'] = 'attachment; filename=' + str(atividade.entrega.name)
     return response
 
-def pagina_erro(request,mensagem):
-    return render(request, 'error.html', {'mensagem':mensagem}) 
+def download_ata(request, pk):
+    ata = get_object_or_404(Ata, pk=pk)
+    link = os.path.join(BASE_DIR, 'media')
+    response = HttpResponse(open(media_url_atividade+ata.entrega.url, 'rb').read())
+    response['Content-Type'] = 'text/plain'
+    response['Content-Disposition'] = 'attachment; filename=' + str(ata.entrega.name)
+    return response
+
 
 def entrega_tarefa(request, id_entrega):
     if request.method == "POST":
@@ -254,11 +372,11 @@ def entrega_tarefa(request, id_entrega):
                     atividade.entrega = file
                     atividade.save()
                     try:
-                        mensagem_email = u"Uma entrega de uma atividade foi realizada.\n\n"+"Informações sobre a atividade:\n\nNome da Atividade: "+atividade.titulo+"\nData de Início: "+atividade.data_inicio+"\nData final: "+atividade.data_final+"\n\n"+"Acesse o sistema utilizando o link: "+"http://gerenciadortcc.pythonanywhere.com/login/"+"."
-                        email = EmailMessage('Nova atividade para seu TCC', mensagem_email, to=[atividade.trabalho.aluno.email, atividade.trabalho.professor.email])
+                        mensagem_email = u"A entrega da atividade "+atividade.titulo+" foi realizada com sucesso.\n\n"+"Acesse o sistema utilizando o link: "+link_site+"."
+                        email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[atividade.trabalho.aluno.email, atividade.trabalho.professor.email])
                         email.send()
                     except:
-                        print("Falha ao enviar o e-mail.")
+                        pass
                     link = '/trabalho/show/' + str(atividade.trabalho.id) + '/'
                     return redirect(link)
                 else:
@@ -269,6 +387,74 @@ def entrega_tarefa(request, id_entrega):
              return render(request, 'error.html', {'mensagem':"Atividade ou arquivo de entrega não encontrado."})
     else:
         return redirect('/index/')
+
+def removerAtividade(request):
+    if request.method == "POST":
+        id_atividade = request.POST.get('id_atividade','')
+        mensagem = "Atividade não encontrada! Entre em contato com os administradores do sistema."
+        usuario = False
+        atividade = False
+        try:
+            atividade = get_object_or_404(Atividade, pk=int(id_atividade))
+        except:
+            return JsonResponse({'mensagem': mensagem})
+        if atividade != False:
+            try:
+                atividade.delete()
+                return JsonResponse({'mensagem': 'Atividade removida com sucesso!'})
+            except:
+                pass
+    else:
+        response = redirect('/index/')
+        return response
+def aprovarAtividade(request):
+    if request.method == "POST":
+        id_atividade = request.POST.get('id_atividade','')
+        mensagem = "Atividade não encontrada! Entre em contato com os administradores do sistema."
+        usuario = False
+        atividade = False
+        try:
+            atividade = get_object_or_404(Atividade, pk=int(id_atividade))
+        except:
+            return JsonResponse({'mensagem': mensagem})
+        if atividade != False:
+            atividade.aprovado = True
+            atividade.save()
+            ### ENVIO DE EMAILS ###
+            try:
+                mensagem_email = u"A atividade "+atividade.titulo+" foi aprovada com sucesso.\n\n"+"Acesse o sistema utilizando o link: "+link_site+"."
+                email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[atividade.trabalho.aluno.email, atividade.trabalho.professor.email])
+                email.send()
+            except:
+                print("Falha ao enviar o e-mail.")
+            return JsonResponse({'mensagem': 'Atividade aprovada com sucesso!'})
+    else:
+        response = redirect('/index/')
+
+def reprovarAtividade(request,pk):
+    path = str(request.path)
+    usuario = request.user
+    try:
+        atividade = get_object_or_404(Atividade, pk=int(pk))
+    except:
+        return render(request, 'error.html', {'mensagem':"Atividade não encontrada."})
+    if request.method == "POST":
+        observacoes = request.POST.get('observacoes','')
+        mensagem = "Atividade não encontrada! Entre em contato com os administradores do sistema."
+        if atividade != False and atividade.aprovado != True:
+            mensagem_email = u"A atividade "+atividade.titulo+" foi reprovada.\n\nObservações do professor: \n"+observacoes+"\n\nAcesse o sistema utilizando o link: "+link_site+"."
+            email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[atividade.trabalho.aluno.email, atividade.trabalho.professor.email])
+            if request.FILES:
+                uploaded_file = request.FILES['file'] # file is the name value which you have provided in form for file field
+                email.attach(uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
+            email.send()
+            return redirect('/trabalho/show/'+str(atividade.trabalho.pk)+'/')
+        else:
+            return redirect('/trabalho/show/'+str(atividade.trabalho.pk)+'/')
+    else:
+        return render(request, 'reprovar_atividade.html', {'path':path,'usuario':usuario,'atividade':atividade})
+
+    
 def trabalho_edit(request, username): 
     instance = get_object_or_404(Trabalho, pk=username)
     if request.method == "POST":
@@ -291,10 +477,13 @@ def trabalho_add(request):
         f = TrabalhoForm(teste)
         if f.is_valid():
             f.save()
-            ### ENVIO DE EMAILS ###
-            mensagem_email = "\n\nUm trabalho foi cadastrado no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: " + link_site + "."
-            email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[Usuario.objects.filter(username=teste['aluno'])[0].email,Usuario.objects.filter(username=teste['professor'])[0].email])
-            email.send()
+            try:
+                ### ENVIO DE EMAILS ###
+                mensagem_email = "\n\nUm trabalho foi cadastrado no Sistema Gerenciador de TCC com seu nome.\n\n"+"Acesse o sistema utilizando o link: " + link_site + "."
+                email = EmailMessage('Sistema Gerenciador de TCC', mensagem_email, to=[Usuario.objects.filter(username=teste['aluno'])[0].email,Usuario.objects.filter(username=teste['professor'])[0].email])
+                email.send()
+            except:
+                pass
             response = redirect('/index/')
             return response
         else:
@@ -376,24 +565,7 @@ def usuario_list(request):
     usuarios = Usuario.objects.all()
     return render(request, 'usuarios_list.html', {"usuario":usuario,"usuarios":usuarios,"path": path})
 
-def removerAtividade(request):
-    if request.method == "POST":
-        id_atividade = request.POST.get('id_atividade','')
-        mensagem = "Atividade não encontrada! Entre em contato com os administradores do sistema."
-        usuario = False
-        try:
-            atividade = get_object_or_404(Atividade, pk=int(id_atividade))
-        except:
-            return JsonResponse({'mensagem': mensagem})
-        if atividade != False:
-            try:
-                atividade.delete()
-                return JsonResponse({'mensagem': 'Atividade removida com sucesso!'})
-            except:
-                pass
-    else:
-        response = redirect('/index/')
-        return response
+
 def recuperar_senha(request):
     if request.method == "POST":
         username = request.POST.get('ra','')
@@ -454,16 +626,16 @@ def home(request):
         if usuario_real != False:
             if request.session.get('perfil') == "Aluno":
                 andamento = andamento.filter(aluno=usuario_real)
-                pendente = pendente.filter(aluno=usuario_real)
                 concluido = concluido.filter(aluno=usuario_real)
             elif request.session.get('perfil') == "Professor":
                 andamento = andamento.filter(aluno=usuario_real)
-                pendente = pendente.filter(aluno=usuario_real)
                 concluido = concluido.filter(aluno=usuario_real)
     except:
         pass
 
     return render(request, 'index.html', {"usuario": usuario, "path": path,"andamento":andamento,"pendente":pendente,"concluido":concluido})
+def pagina_erro(request,mensagem):
+    return render(request, 'error.html', {'mensagem':mensagem}) 
 
 def logout_act(request):
     logout(request)

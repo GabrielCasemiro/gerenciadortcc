@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block content %}
+<style type="text/css">
+.botao{
+    width:100%; 
+    height: 30px !important;
+    padding: 0px;
+}
+</style>
+<!-- Heading -->
+<div class="card mb-4 wow fadeIn">
+
+    <!--Card content-->
+    <div class="card-body d-sm-flex justify-content-between">
+
+        <h4 class="mb-2 mb-sm-0 pt-1">
+            <span>Listagem de Defesas</span>
+        </h4>
+        {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+        <a href="/defesa/add/">
+            <button class="btn btn-primary btn-sm my-0 p" type="submit" onclick="showLoader()">
+                <i class="fa fa-plus"></i>
+                Nova Defesa
+            </button>
+        </a>
+        {%endif%}
+
+
+    </div>
+
+</div>
+<!-- Heading -->
+
+
+
+<!--Grid row-->
+<div class="row wow fadeIn">
+    <!--Grid column-->
+    {% if atas %}
+    <div class="col-md-12 mb-4">
+
+        <!--Card-->
+        <div class="card">
+
+            <!--Card content-->
+            <div class="card-body">
+                <h5 class="card-title">Defesas</h5>
+                <!-- Table  -->
+                <div class="table-responsive-sm">
+                    <table class="table table-hover">
+                        <!-- Table head -->
+                        <thead class="blue lighten-4">
+                            <tr>
+                                <th width="30%">Trabalho</th>
+                                <th width="15%">Data</th>
+                                <th width="15%">Aluno</th>
+                                
+                                <th width="30%">Avaliadores</th>
+                                {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+
+                                <th>Opções</th>
+                                {%endif%}
+                            </tr>
+                        </thead>
+                        <!-- Table head -->
+
+                        <!-- Table body -->
+                        <tbody>
+                            {% for ata in atas %}
+                            <tr>
+                                <th>{{ ata.tcc.titulo }}</th>
+                                <td>{{ ata.data|date:"d/m/Y"}} {%if ata.hora%} às {{ata.hora}}{%endif%}</td>
+                                <td>{{ ata.tcc.aluno.username }}</td>
+                                <td>
+                                    {%for avaliador in ata.avaliadores.all%}
+                                      {{avaliador.username}}<hr> 
+                                      {%empty%} Sem avaliadores 
+                                      {% endfor %} 
+                                </td>
+
+                                <td>
+                                 {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
+                                 <a href="/defesa/show/{{ ata.pk }}">
+                                    <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                        <button data-toggle="tooltip" data-placement="top" title="Visualizar" class="btn text-white btn-info botao click " onclick="showLoader()">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </a>
+                                <form method="POST" id="formExcluir" action="/defesa/excluir/">{% csrf_token %}
+                                    <input type="text" name="username" value="{{ata.pk}}" hidden>
+                                    <span data-toggle="modal" data-target="#modalLRFormDemo">
+                                        <button type="submit" data-toggle="tooltip" data-placement="top" title="Excluir" class="btn text-white btn-danger botao click " id="excluir" onclick="showLoader()">
+                                            <i class="fa fa-trash"  ></i>
+                                        </button>
+                                    </span>
+
+                                </form>
+                                {%endif%}
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                    <!-- Table body -->
+                </table>
+                <!-- Table  -->
+            </div>
+        </div>
+
+    </div>
+    <!--/.Card-->
+
+</div>
+<!--Grid column-->
+
+{%endif%}
+
+
+{% endblock %}

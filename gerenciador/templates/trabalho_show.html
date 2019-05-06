@@ -38,6 +38,7 @@
       <h5 class="card-title">Status</h5>
       <p>{{trabalho.tipo}}</p>
       <hr>
+      {%if trabalho.tipo == "Andamento" %}
       <h5 class="card-title">Cronograma</h5>
       <div class="cd-schedule">
        <div class="timeline">
@@ -96,14 +97,19 @@
       <thead>
         <tr>
           <th scope="col">Atividade</th>
+          <th scope="col">Data Inicial</th>
           <th scope="col">Data Final</th>
           <th scope="col">Entrega</th>
+          {% if request.session.perfil in "Professor" or request.session.perfil in "Coordenador"%}
+          <th scope="col">Aprovação</th>
+          {%endif%}
         </tr>
       </thead>
       <tbody>
         {%for atividade in atividades_entregas%}
         <tr>
           <th scope="row">{{atividade.titulo}}</th>
+          <td>{{atividade.data_inicio}}</td>
           <td>{{atividade.data_final}}</td>
           <td>
             {%if atividade.entrega%}
@@ -112,26 +118,52 @@
             Não há entrega nessa atividade.
             {%endif%}
             {% ifequal request.session.perfil "Aluno" %}
-            {%if data_hoje <= atividade.data_final %} 
+            {%if atividade.aprovado == False %}
+            {%if data_hoje <= atividade.data_final and data_hoje >= atividade.data_inicio %} 
             <form action="/atualizar_entrega/{{atividade.id}}/"  enctype="multipart/form-data" method="POST"> {% csrf_token %}
-             <input type="file" name="entrega" required id="id_entrega" /> <button type="submit" class="btn btn-primary" > Salvar </button> 
+             <input type="file" name="entrega" required id="id_entrega" /> <button type="submit" class="btn btn-primary btn-sm" onclick="showLoader()"> Salvar </button> 
              {%else%}
-             Tarefa atrasada.
+             Fora do período de entrega.
+             {%endif%}
+             {%else%}
+             <br>
+             <i class="fa fa-check"></i>&nbsp; Atividade Aprovada
              {%endif%}
              {%endifequal%}
            </form>
-           <td>
-           </tr>
-           {%endfor%}
-         </tbody>
-       </table>
-       {% else %}
-       <p>Ainda não há atividades com entregas cadastradas para esse trabalho.</p>
-       {% endif %}
-       {%endif%}
-     </div>
-   </div>
- </div>
+         </td>
+          {% if request.session.perfil in "Professor" or request.session.perfil in "Coordenador"%}
+         <td>
+
+          {%if atividade.entrega%}
+          {%if atividade.aprovado == False%}
+           <button type="submit" id="adicionar" title="Aprovar Atividade" class="btn btn-primary botao click  btn-sm" onclick="aprovarAtividade({{atividade.id}});">
+            <i class="fa fa-check"></i>&nbsp; Aprovar
+          </button>
+          <a href="/reprovarAtividade/{{atividade.pk}}/" data-toggle="tooltip" data-placement="top" title="Reprovar Atividade" class="btn btn-danger botao click btn-sm">
+            <i class="fa fa-ban"></i>&nbsp; Reprovar
+          </a>
+          {%else%}
+          <i class="fa fa-check"></i>&nbsp; Atividade Aprovada
+          {%endif%}
+          {%else%}
+          Não é possível avaliar
+          {%endif%}
+        </td>
+        {%endif%}
+      </tr>
+      {%endfor%}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Ainda não há atividades com entregas cadastradas para esse trabalho.</p>
+  {% endif %}
+  {%endif%}
+
+  {%endif%}
+</div>
+</div>
+</div>
 </div>
 <!--/.Card-->
 </div>
@@ -148,16 +180,32 @@
   var adicionar = 0;
   $("#adicionar").click(function(){
     if(adicionar == 0){
-      var formulario = '<form action="/trabalho/show/{{id}}/" method="POST">'+'{% csrf_token %}'+'<div class="row"> <div class="col-12 col-md-6"> <div id="div_id_titulo" class="form-group"> <label for="id_titulo" class="col-form-label  requiredField">Titulo<span class="asteriskField">*</span> </label> <div class=""> <input type="text" name="titulo" id="id_titulo" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_id_titulo" class="form-text text-muted">Título do Trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_inicial" class="form-group"> <label for="data_inicial" class="col-form-label  requiredField">Data Inicial<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_inicio" id="data_inicial" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_inicial" class="form-text text-muted">Data inicial do trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_final" class="form-group"> <label for="data_final" class="col-form-label  requiredField">Data Final<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_final" id="data_final" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_final" class="form-text text-muted">Data final do trabalho</small> </div> </div> </div>  <div class="custom-control custom-checkbox mt-5"> <input type="checkbox" class="custom-control-input" id="id_arquivo" name="arquivo"> <label class="custom-control-label" for="id_arquivo">Atividade tem entrega</label> </div><input type="text" name="trabalho" id="id_trabalho" required class="textinput textInput form-control"value="{{id}}" hidden/>  <div class="col-12 col-md-12 mt-3"> <button type="submit" class="btn btn-primary btn-block h2"> Salvar </button> </div> </div> </form>'
+      var formulario = '<form action="/trabalho/show/{{id}}/" method="POST">'+"{% csrf_token %}"+'<div class="row"> <div class="col-12 col-md-6"> <div id="div_id_titulo" class="form-group"> <label for="id_titulo" class="col-form-label  requiredField">Titulo<span class="asteriskField">*</span> </label> <div class=""> <input type="text" name="titulo" id="id_titulo" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_id_titulo" class="form-text text-muted">Título do Trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_inicial" class="form-group"> <label for="data_inicial" class="col-form-label  requiredField">Data Inicial<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_inicio" id="data_inicial" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_inicial" class="form-text text-muted">Data inicial do trabalho</small> </div> </div> </div> <div class="col-12 col-md-6"> <div id="div_data_final" class="form-group"> <label for="data_final" class="col-form-label  requiredField">Data Final<span class="asteriskField">*</span> </label> <div class=""> <input type="date" name="data_final" id="data_final" required class="textinput textInput form-control" maxlength="150" /> <small id="hint_data_final" class="form-text text-muted">Data final do trabalho</small> </div> </div> </div>  <div class="custom-control custom-checkbox mt-5"> <input type="checkbox" class="custom-control-input" id="id_arquivo" name="arquivo"> <label class="custom-control-label" for="id_arquivo">Atividade tem entrega</label> </div><input type="text" name="trabalho" id="id_trabalho" required class="textinput textInput form-control"value="{{id}}" hidden/>  <div class="col-12 col-md-12 mt-3"> <button type="submit" class="btn btn-primary btn-block h2" onclick="showLoader();"> Salvar </button> </div> </div> </form>'
       $("#form").append(formulario);
     }
     adicionar = 1;
   });
 
+
   function removerAtividade(id_atividade){
+    showLoader();
    $.ajax({
      type:"POST",
      url:"/removerAtividade/",
+     data: {csrfmiddlewaretoken:'{{ csrf_token }}', id_atividade:id_atividade},
+
+     success: function(data){
+       alert(data.mensagem);
+       location.href = location.href;
+
+     },
+   });
+  }
+  function aprovarAtividade(id_atividade){
+    showLoader();
+   $.ajax({
+     type:"POST",
+     url:"/aprovarAtividade/",
      data: {csrfmiddlewaretoken:'{{ csrf_token }}', id_atividade:id_atividade},
 
      success: function(data){

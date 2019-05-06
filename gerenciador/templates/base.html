@@ -96,8 +96,8 @@
                         <i class="fa fa-list mr-3"></i>Trabalhos
                     </a>
                     {% ifequal request.session.perfil "Coordenador" %}
-                    <a href="/show_atas/" class="list-group-item list-group-item-action waves-effect  {%if "atas" in path or "ata" in path %}  active {%endif%}" onclick="showLoader()">
-                        <i class="fa fa-table mr-3"></i>Atas</a>
+                    <a href="/show_defesas/" class="list-group-item list-group-item-action waves-effect  {%if "defesas" in path or "defesa" in path %}  active {%endif%}" onclick="showLoader()">
+                        <i class="fa fa-table mr-3"></i>Defesas</a>
                        
                     <a href="/usuario/list/" class="list-group-item list-group-item-action {% if "usuario" in path  %} waves-effect active {%endif%}" onclick="showLoader()">
                         <i class="fa fa-user mr-3"></i>Usuários</a>
@@ -128,8 +128,8 @@
                         <i class="fa fa-list mr-3"></i>Trabalhos
                     </a>
                     {% ifequal request.session.perfil "Coordenador" %}
-                    <a href="/show_atas/" class="list-group-item list-group-item-action waves-effect  {%if "atas" in path or "ata" in path %}  active {%endif%}" onclick="showLoader()">
-                        <i class="fa fa-table mr-3"></i>Atas</a>
+                    <a href="/show_defesas/" class="list-group-item list-group-item-action waves-effect  {%if "defesas" in path or "defesa" in path %}  active {%endif%}" onclick="showLoader()">
+                        <i class="fa fa-table mr-3"></i>Defesas</a>
                        
                     <a href="/usuario/list/" class="list-group-item list-group-item-action {% if "usuario" in path  %} waves-effect active {%endif%}" onclick="showLoader()"> 
                         <i class="fa fa-user mr-3"></i>Usuários</a>
@@ -141,7 +141,8 @@
   </div>
 </nav>
         <main class="pt-5 mx-lg-5">
-            <div class="container-fluid mt-5">
+            <div class="container-fluid mt-md-5"  >
+
 
                 {% block content %}
                 {% endblock %}            
@@ -151,7 +152,7 @@
         <!--Main layout-->
 
         <!--Footer-->
-        <footer class="page-footer text-center font-small primary-color-dark darken-2 mt-4 wow fadeIn">
+        <footer class="page-footer text-center font-small primary-color-dark darken-2 mt-4 fadeIn">
 
 
 

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+
+<!-- Heading -->
+<div class="row wow fadeIn">
+
+    <!--Grid column-->
+    <div class="col-md-12 mb-4">
+
+        <!--Card-->
+        <div class="card">
+
+            <!--Card content-->
+            <div class="card-body">
+                <h5>Resultado da defesa do TCC: {{defesa.tcc.titulo}}</h5>
+                <form method="post"  enctype="multipart/form-data"  action="/resultado_defesa/{{defesa.pk}}/" >{% csrf_token %}
+                    <div class="input-group mb-3">
+                        <select class="custom-select" id="inputGroupSelect02" name="aprovado" required>
+                            <option selected>Selecione uma opção</option>
+                            <option value="True">Aprovado</option>
+                            <option value="False">Reprovado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleFormControlFile1">Ata</label>
+                        <input type="file" name='file' class="form-control-file" id="exampleFormControlFile1" required>
+                    </div>
+                     <i class="fa fa-info-circle"></i>&nbsp; <i>Ao submeter o resultado, será enviado automaticamente um e-mail contendo um certificado (em anexo) para os todos os envolvidos na defesa. </i><br><br>
+                    <button type="submit" class="btn btn-primary"> <i class="fa fa-send"></i>&nbsp; Enviar resultado </button>
+                </form>
+
+
+            </div>
+
+        </div>
+        <!--/.Card-->
+
+    </div>
+    <!--Grid column-->
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Heading -->
+<div class="card mb-4 wow fadeIn">
+
+  <!--Card content-->
+  <div class="card-body d-sm-flex justify-content-between">
+
+    <h4 class="mb-2 mb-sm-0">
+      <span>Visualização da Defesa do trabalho: {{defesa.tcc.titulo}}</span>
+    </h4>
+
+  </div>
+
+</div>
+<!-- Heading -->
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Gerar Certificado</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="/certificado/" >{% csrf_token %}
+          <p>Escolha um dos integrantes para gerar o certificado.</p> <br>
+          {%for integrante in integrantes%}
+          <input type="text" name="defesa" value="{{defesa.pk}}" hidden>
+          <div class="custom-control custom-radio">
+
+            <input type="radio" id="customRadio{{integrante.pk}}" name="usuario" value="{{integrante.pk}}" class="custom-control-input" selected>
+            <label class="custom-control-label" for="customRadio{{integrante.pk}}">{{integrante.ra}} - {{integrante.username}}</label>
+          </div>
+
+          {%empty%}
+          <i class="fa fa-info-circle"></i>&nbsp; Sem integrantes para selecionar.
+          <br>
+          {%endfor%}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+          <button type="button" class="btn btn-primary">Gerar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Enviar monografia</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form method="post" action="/selecionarDefesa/" >{% csrf_token %}
+            <p>Escolha uma das atividades <b>(com entrega e aprovadas)</b>  no TCC, listadas abaixo para ser enviado como Monografia.</p> <br>
+            {%for atividade in atividades%}
+            <input type="text" name="defesa" value="{{defesa.pk}}" hidden>
+            <div class="custom-control custom-radio">
+
+              <input type="radio" id="customRadio{{atividade.pk}}" name="atividade" value="{{atividade.pk}}" class="custom-control-input">
+              <label class="custom-control-label" for="customRadio{{atividade.pk}}">{{atividade.titulo}} - {{atividade.entrega}}</label>
+            </div>
+
+            {%empty%}
+            <i class="fa fa-info-circle"></i>&nbsp; Sem atividades para selecionar. Cadastre uma atividade e aprove-a para poder selecionar.
+            <br>
+            {%endfor%}
+            <br>
+            <i class="fa fa-info-circle"></i>&nbsp; <i>Ao enviar a monografia, será enviado automaticamente um e-mail contendo a entrega da atividade selecionada (em anexo), para os todos os envolvidos na defesa. </i>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            <button type="submit" class="btn btn-primary" onclick="showLoader();">Enviar Monografia</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!--Grid row-->
+  <div class="row fadeIn">
+   <div class="col-md-12 mb-4">
+     <!--Card-->
+     <div class="card">
+
+      <!--Card content-->
+      <div class="card-body">
+        <h5 class="card-title">TCC</h5>
+        <p>{{defesa.tcc.titulo}}</p>
+        <h5 class="card-title">Data e hora da Defesa</h5>
+        <p>{{ defesa.data|date:"d/m/Y"}} {%if defesa.hora%} às {{defesa.hora}}{%endif%}</p>
+        <h5 class="card-title">Aluno</h5>
+        <p>{{defesa.tcc.aluno.ra}} - {{defesa.tcc.aluno.username}}</p>
+        <h5 class="card-title">Avaliadores</h5>
+        <ul class="list-group ">
+          {%for avaliador in defesa.avaliadores.all%}
+          <li class="list-group-item">{{avaliador.username}}</li>
+          {%empty%} Sem avaliadores 
+          {% endfor %} 
+        </ul>
+        <h5 class="card-title mt-4">Observações</h5>
+        <p>{{defesa.observacoes}}</p>
+
+        <h5 class="card-title mt-4">Monografia</h5>
+        {%if defesa.monografia%}
+        <a href="/download_entrega/{{defesa.monografia.id}}" class="text-primary">{{defesa.monografia.titulo}}</a>
+        {%else%}
+        <p>Nenhuma monografia enviada.</p>
+        {%endif%}
+        <h5 class="card-title mt-4">Ata</h5>
+        {%if defesa.entrega%}
+        <a href="/download_ata/{{defesa.pk}}" class="text-primary">{{defesa.entrega}}</a>
+        {%else%}
+        <p>Nenhuma ata enviada.</p>
+        {%endif%}
+        <h5 class="card-title mt-4">Status</h5>
+        {%if defesa.aprovado == True%}
+        Aprovado
+        {%else%}
+        {%if not defesa.entrega %}
+        <p>Não avaliado.</p>
+        {%else%}
+        <p>Reprovado.</p>
+        {%endif%}
+        {%endif%}
+
+        <hr>
+        <br>
+
+
+        {%if defesa.tcc.tipo == "Andamento" %}
+        {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor"%}
+        <button data-toggle="modal" data-target="#exampleModal" id="adicionar" title="Enviar monografia" class="btn btn-primary  botao click">
+          <i class="fa fa-send"></i>&nbsp; Enviar monografia
+        </button>
+
+        {%if defesa.monografia and not defesa.entrega and defesa.aprovado == False%}
+        <a href="/resultado_defesa/{{defesa.pk}}/" data-toggle="tooltip" data-placement="top" id="adicionar" title="Cadastrar Cronograma" class="btn btn-primary  botao click">
+          <i class="fa fa-plus"></i>&nbsp; Cadastrar Resultado
+        </a>
+        {%else%}
+
+        <button data-toggle="tooltip" data-placement="top" id="adicionar" title="Cadastrar Cronograma" class="btn btn-primary disabled botao click">
+          <i class="fa fa-plus"></i>&nbsp; Cadastrar Resultado
+        </button>
+        {%endif%}
+
+        {%endif%}
+        {%endif%}
+
+        {%if defesa.entrega and defesa.aprovado == True%}
+        <button data-toggle="modal" data-target="#exampleModalCenter" class="btn btn-primary  botao click">
+          <i class="fa fa-graduation-cap "></i>&nbsp; Gerar Certificado
+        </button>
+        {%else%}
+
+        <a data-toggle="tooltip" data-placement="top" id="adicionar" title="Cadastrar Cronograma" class="btn btn-primary  disabled botao click">
+          <i class="fa fa-graduation-cap "></i>&nbsp; Gerar Certificado
+        </a>
+
+        {%endif%}
+
+      </div>
+    </div>
+  </div>
+</div>
+<!--/.Card-->
+</div>
+</div>
+
+
+{% endblock %}
+
+{% block javascript %}
+<script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+
+{% endblock %}        

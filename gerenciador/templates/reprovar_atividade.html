@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+
+<!-- Heading -->
+<div class="row wow fadeIn">
+
+    <!--Grid column-->
+    <div class="col-md-12 mb-4">
+
+        <!--Card-->
+        <div class="card">
+
+            <!--Card content-->
+            <div class="card-body">
+                <h5>Reprovar atividade: {{atividade.titulo}}</h5>
+                <form method="post"  enctype="multipart/form-data"  action="/reprovarAtividade/{{atividade.pk}}/" >{% csrf_token %}
+                    <div class="form-group">
+                        <label for="exampleFormControlTextarea1">Observações</label>
+                        <textarea class="form-control" name='observacoes' id="exampleFormControlTextarea1" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="exampleFormControlFile1">Arquivo em anexo</label>
+                        <input type="file" name='file' class="form-control-file" id="exampleFormControlFile1">
+                    </div>
+                    <button type="submit" onclick="showLoader()" class="btn btn-primary"> Enviar reprovação </button>
+                </form>
+
+
+            </div>
+
+        </div>
+        <!--/.Card-->
+
+    </div>
+    <!--Grid column-->
+
+</div>
+
+{% endblock %}
