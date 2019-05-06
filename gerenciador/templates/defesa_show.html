@@ -32,12 +32,11 @@
       <div class="modal-body">
         <form method="post" action="/certificado/" >{% csrf_token %}
           <p>Escolha um dos integrantes para gerar o certificado.</p> <br>
-          {%for integrante in integrantes%}
           <input type="text" name="defesa" value="{{defesa.pk}}" hidden>
+          {%for integrante in integrantes%}
           <div class="custom-control custom-radio">
-
-            <input type="radio" id="customRadio{{integrante.pk}}" name="usuario" value="{{integrante.pk}}" class="custom-control-input" selected>
-            <label class="custom-control-label" for="customRadio{{integrante.pk}}">{{integrante.ra}} - {{integrante.username}}</label>
+            <input type="radio" id="customRadio{{integrante.ra}}" name="usuario" value="{{integrante.ra}}" class="custom-control-input" >
+            <label class="custom-control-label" for="customRadio{{integrante.ra}}">{{integrante.ra}} - {{integrante.username}}</label>
           </div>
 
           {%empty%}
@@ -47,8 +46,9 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-          <button type="button" class="btn btn-primary">Gerar</button>
+          <button type="submit" class="btn btn-primary">Gerar</button>
         </div>
+      </form>
       </div>
     </div>
   </div>

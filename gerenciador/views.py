@@ -133,22 +133,29 @@ def gerar_certificado(usuario,defesa):
     buffer = io.BytesIO()
 
     p = canvas.Canvas(buffer)
+    mensagem = "Certificado de Participação" 
+    p.setFont("Times-Roman", 20)
+    p.drawString(200,800, mensagem)
 
-    mensagem = "Certifico a participação do integrante %s na defesa do TCC %s no dia %s." % (usuario.username, defesa.tcc.titulo, defesa.data)
-    p.drawString(100, 100, mensagem)
+
+    p.setFont("Helvetica", 12)
+    mensagem = "Certifico a participação do integrante %s na defesa " % (usuario.username)
+    p.drawString(25,600, mensagem)
+    mensagem ="do TCC %s na data de %s. " % (defesa.tcc.titulo, defesa.data.strftime('%d/%m/%Y'))
+    p.drawString(25,580, mensagem)
 
     p.showPage()
     p.save()
 
-    return FileResponse(buffer, as_attachment=True, filename='hello.pdf')
+    return HttpResponse(buffer.getvalue(), content_type='application/pdf')
 
 def certificado(request):
     if request.method == "POST":
         usuario = request.POST.get('usuario')
         defesa = request.POST.get('defesa','')
         try:
-            usuario_obj = get_object_or_404(Usuario, pk=int(atividade))
-            defesa_obj = get_object_or_404(Ata, pk=int(usuario))
+            usuario_obj = get_object_or_404(Usuario, ra=int(usuario))
+            defesa_obj = get_object_or_404(Ata, id=int(defesa))
         except:
             return render(request, 'error.html', {'mensagem':"Erro ao selecionar o usuário ou a defesa. Entre em contato com os administradores."})
         if usuario_obj and defesa_obj:
@@ -241,6 +248,19 @@ def resultado_defesa(request, pk):
                     uploaded_file = request.FILES['file']
                     defesa.entrega =  uploaded_file
                 defesa.save()
+
+                ### ENVIO DE E-MAIL ###
+                try:
+                    status = 'Reprovado'
+                    if defesa.aprovado == True:
+                        status = 'Aprovado'
+                    trabalho = Trabalho.objects.get(id=defesa.tcc.id)
+                    avaliadores_emails = ','.join([str(avaliador.email) for avaliador in defesa.avaliadores.all()])
+                    mensagem = "O resultado do TCC %s foi cadastrado com sucesso no Sistema Gerenciador de TCC.\n\n Informações sobre a defesa:\n Data: %s\n Observações: %s Status: %s \n\n Acesse o sistema utilizando o link: %s." % (trabalho.titulo, defesa_obj.data.strftime('%d/%m/%Y'), defesa_obj.observacoes, status, link_site)
+                    email = EmailMessage('Sistema Gerenciador de TCC', mensagem, to=[trabalho.aluno.email, trabalho.professor.email, avaliadores_emails])
+                    email.send()
+                except:
+                    print('Falha ao enviar o email')
                 trabalho = Trabalho.objects.get(id=defesa.tcc.id)
                 trabalho.tipo = 'Concluido'
                 trabalho.save()
