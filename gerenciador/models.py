@@ -29,10 +29,10 @@ def validate_file_size(value):
         return value
 
 class Usuario(models.Model):
-    username = models.CharField(primary_key=True, max_length=150,default='')
-    email = models.EmailField(max_length=254,default='')
+    username = models.CharField(max_length=1500,default='')
+    email = models.EmailField(max_length=500,default='')
     password = models.CharField(max_length=150,default='')
-    ra = models.PositiveIntegerField(default='',unique = True)
+    ra = models.PositiveIntegerField(default='',primary_key=True)
     perfil = models.CharField(
         max_length=20,
         choices=ESCOLHA_PERFIL,
@@ -50,8 +50,8 @@ class Trabalho(models.Model):
         default='Andamento'
     )
     data_inicio = models.DateField(help_text="Data de Início", auto_now_add=True)
-    aluno = models.ForeignKey(Usuario, related_name='Aluno',blank=True, null=True,on_delete=models.CASCADE)
-    professor = models.ForeignKey(Usuario, related_name='Professor',blank=True, null=True,on_delete=models.CASCADE)
+    aluno = models.ForeignKey(Usuario, related_name='Aluno',blank=True, null=True,on_delete=models.SET_NULL)
+    professor = models.ForeignKey(Usuario, related_name='Professor',blank=True, null=True,on_delete=models.SET_NULL)
 
 class Atividade(models.Model):
     titulo = models.CharField(max_length=150,default='',help_text="Título da Atividade")

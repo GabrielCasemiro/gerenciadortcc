@@ -31,7 +31,7 @@
             <div class="card-body">
                 <form method="post" action="{{link}}" >{% csrf_token %}
                        {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary"> Salvar </button>
+                    <button type="submit" class="btn btn-primary" onclick="showLoader();"> Salvar </button>
                 </form>
                
 

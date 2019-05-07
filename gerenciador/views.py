@@ -139,7 +139,7 @@ def gerar_certificado(usuario,defesa):
 
 
     p.setFont("Helvetica", 12)
-    mensagem = "Certifico a participação do integrante %s na defesa " % (usuario.username)
+    mensagem = "Certifico a participação do %s %s na defesa " % (usuario.perfil, usuario.username)
     p.drawString(25,600, mensagem)
     mensagem ="do TCC %s na data de %s. " % (defesa.tcc.titulo, defesa.data.strftime('%d/%m/%Y'))
     p.drawString(25,580, mensagem)
@@ -243,12 +243,15 @@ def resultado_defesa(request, pk):
         if request.method == "POST":
             aprovado = request.POST.get('aprovado','')
             if aprovado != '':
+                if aprovado == 'True':
+                    aprovado = True
+                else:
+                    aprovado = False
                 defesa.aprovado = aprovado
                 if request.FILES:
                     uploaded_file = request.FILES['file']
                     defesa.entrega =  uploaded_file
                 defesa.save()
-
                 ### ENVIO DE E-MAIL ###
                 try:
                     status = 'Reprovado'
@@ -256,7 +259,7 @@ def resultado_defesa(request, pk):
                         status = 'Aprovado'
                     trabalho = Trabalho.objects.get(id=defesa.tcc.id)
                     avaliadores_emails = ','.join([str(avaliador.email) for avaliador in defesa.avaliadores.all()])
-                    mensagem = "O resultado do TCC %s foi cadastrado com sucesso no Sistema Gerenciador de TCC.\n\n Informações sobre a defesa:\n Data: %s\n Observações: %s Status: %s \n\n Acesse o sistema utilizando o link: %s." % (trabalho.titulo, defesa_obj.data.strftime('%d/%m/%Y'), defesa_obj.observacoes, status, link_site)
+                    mensagem = "O resultado do TCC %s foi cadastrado com sucesso no Sistema Gerenciador de TCC.\n\n Informações sobre a defesa:\n Data: %s\n Observações: %s Status: %s \n\n Acesse o sistema utilizando o link: %s." % (trabalho.titulo, defesa.data.strftime('%d/%m/%Y'), defesa.observacoes, status, link_site)
                     email = EmailMessage('Sistema Gerenciador de TCC', mensagem, to=[trabalho.aluno.email, trabalho.professor.email, avaliadores_emails])
                     email.send()
                 except:
@@ -270,9 +273,6 @@ def resultado_defesa(request, pk):
         return render(request, 'resultado_defesa.html', {'defesa':defesa,'path':path,'usuario':usuario})
     else:
         return render(request, 'error.html', {'mensagem':"Defesa sem monografia cadastrada."})
-
-
-    
 
 def selecionarDefesa(request):
     if request.method == "POST":
@@ -312,7 +312,6 @@ Acesse o sistema utilizando o link: %s.""" % (trabalho.titulo, defesa_obj.data.s
 ##             TRABALHOS                  ##
 ##                                        ##
 ############################################
-
 
 def trabalho_delete(request):
     name = request.POST.get('username','')
@@ -381,7 +380,6 @@ def download_ata(request, pk):
     response['Content-Disposition'] = 'attachment; filename=' + str(ata.entrega.name)
     return response
 
-
 def entrega_tarefa(request, id_entrega):
     if request.method == "POST":
         atividade = get_object_or_404(Atividade, pk=id_entrega)
@@ -427,6 +425,7 @@ def removerAtividade(request):
     else:
         response = redirect('/index/')
         return response
+
 def aprovarAtividade(request):
     if request.method == "POST":
         id_atividade = request.POST.get('id_atividade','')
@@ -474,19 +473,23 @@ def reprovarAtividade(request,pk):
     else:
         return render(request, 'reprovar_atividade.html', {'path':path,'usuario':usuario,'atividade':atividade})
 
-    
-def trabalho_edit(request, username): 
+def trabalho_edit(request, username):
+    usuario = request.user
+    path = 'trabalho' 
     instance = get_object_or_404(Trabalho, pk=username)
-    if request.method == "POST":
-        form = TrabalhoForm(request.POST or None, instance=instance)
-        if form.is_valid():
-            form.save()
-            return redirect('/index/')
+    if instance.aluno == usuario or instance.professor == usuario or request.session['perfil'] == 'Coordenador':
+        if request.method == "POST":
+            form = TrabalhoForm(request.POST or None, instance=instance)
+            if form.is_valid():
+                form.save()
+                return redirect('/index/')
+        else:
+            form = TrabalhoForm(instance=instance)
+        titulo = u"Edição do Trabalho: %s" % instance.titulo
+        link = u"/trabalho/edit/%s/" % instance.pk
+        return render(request, 'model_form.html', {'form': form,"username":username,"titulo":titulo, "link":link,'path':path})
     else:
-        form = TrabalhoForm(instance=instance)
-    titulo = u"Edição do Trabalho: %s" % instance.descricao
-    link = u"/trabalho/edit/%s/" % instance.pk
-    return render(request, 'model_form.html', {'form': form,"username":username,"titulo":titulo, "link":link}) 
+        return redirect('/permissao/')
 
 def trabalho_add(request):
     path = str(request.path)
@@ -524,8 +527,7 @@ def usuario_edit(request, username):
         form = UserForm(request.POST or None, instance=instance)
         if form.is_valid():
             form.save()
-            usuario = get_object_or_404(User, username=username)
-            usuario.username = form.data['ra']
+            usuario = get_object_or_404(User, username=form.data['ra'])
             usuario.first_name = form.data['username']
             usuario.email = form.data['email']
             usuario.set_password(form.data['password'])
@@ -546,17 +548,20 @@ def usuario_add(request):
         teste = request.POST.copy() 
         f = UserForm(teste)
         if f.is_valid():
-            user = User.objects.create_user(teste['ra'], teste['email'], teste['password'],first_name=teste['username'])
+            user = User.objects.create_user(username=teste['ra'], email=teste['email'], password=teste['password'],first_name=teste['username'])
             user.is_superuser = 1
             user.is_staff = 0
             user.is_active = 1
             user.save()
             f.save()
             usuarios = Usuario.objects.all()
-            mensagem = "Usuário cadastrado com sucesso!" 
-            mensagem_email = "\n\nParabéns " + teste['username'] + "! Você agora tem acesso ao sistema de Gerenciador de TCC.\n"+"Seu login: " + teste['ra'] + "\nSua senha: " + teste['password'] + "\n\nAcesse o sistema utilizando o link: " + link_site + "."        
-            email = EmailMessage('Acesso ao Sistema Gerenciador de TCC', mensagem_email, to=[teste['email']])
-            email.send()
+            try:
+                mensagem = "Usuário cadastrado com sucesso!" 
+                mensagem_email = "\n\nParabéns " + teste['username'] + "! Você agora tem acesso ao sistema de Gerenciador de TCC.\n"+"Seu login: " + teste['ra'] + "\nSua senha: " + teste['password'] + "\n\nAcesse o sistema utilizando o link: " + link_site + "."        
+                email = EmailMessage('Acesso ao Sistema Gerenciador de TCC', mensagem_email, to=[teste['email']])
+                email.send()
+            except:
+                print('falha ao enviar o e-mail')
             return render(request, 'usuarios_list.html', {"mensagem":mensagem,"usuario":usuario,"usuarios":usuarios,"path": path})
         else:
             form = UserForm(teste)
@@ -584,7 +589,6 @@ def usuario_list(request):
     usuario = request.user 
     usuarios = Usuario.objects.all()
     return render(request, 'usuarios_list.html', {"usuario":usuario,"usuarios":usuarios,"path": path})
-
 
 def recuperar_senha(request):
     if request.method == "POST":
@@ -622,7 +626,7 @@ def login(request):
             try:
                 request.session['perfil'] = usuario.perfil
             except:
-                pass
+                request.session['perfil'] = 'Aluno'
             auth_login(request, user)
             return HttpResponseRedirect('/index/')
         else:
@@ -638,7 +642,10 @@ def home(request):
     pendente = []
     concluido = []
     usuario_real = False
-    usuario_real = Usuario.objects.filter(ra = request.user.username)
+    try:
+        usuario_real = Usuario.objects.get(ra = int(request.user.username))
+    except:
+        pass
     andamento = Trabalho.objects.all().filter(tipo="Andamento")
     pendente = Trabalho.objects.all().filter(tipo="Pendente")
     concluido = Trabalho.objects.all().filter(tipo="Concluido")
@@ -648,13 +655,15 @@ def home(request):
                 andamento = andamento.filter(aluno=usuario_real)
                 concluido = concluido.filter(aluno=usuario_real)
             elif request.session.get('perfil') == "Professor":
-                andamento = andamento.filter(aluno=usuario_real)
-                concluido = concluido.filter(aluno=usuario_real)
+                andamento = andamento.filter(professor=usuario_real)
+                concluido = concluido.filter(professor=usuario_real)
     except:
         pass
 
     return render(request, 'index.html', {"usuario": usuario, "path": path,"andamento":andamento,"pendente":pendente,"concluido":concluido})
-def pagina_erro(request,mensagem):
+
+def permissao(request):
+    mensagem = "Seu perfil não tem acesso a essa página."
     return render(request, 'error.html', {'mensagem':mensagem}) 
 
 def logout_act(request):

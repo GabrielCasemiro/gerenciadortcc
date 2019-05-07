@@ -42,5 +42,6 @@ urlpatterns = [
     url(r'^removerAtividade/', views.removerAtividade),
     url(r'^aprovarAtividade/', views.aprovarAtividade),
     url(r'^selecionarDefesa/', views.selecionarDefesa),
-    url(r'^reprovarAtividade/(?P<pk>\w+)/$', views.reprovarAtividade)
+    url(r'^reprovarAtividade/(?P<pk>\w+)/$', views.reprovarAtividade),
+    url(r'^permissao/', views.permissao)
 ]
