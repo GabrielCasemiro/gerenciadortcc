@@ -168,7 +168,7 @@ def show_atas(request):
     usuario = request.user
     usuario_real = False
     usuario_real = Usuario.objects.filter(ra = request.user.username)
-    atas = Ata.objects.all()
+    atas = Ata.objects.all().order_by('-id')
 
     try:
         if usuario_real != False:
@@ -477,7 +477,8 @@ def trabalho_edit(request, username):
     usuario = request.user
     path = 'trabalho' 
     instance = get_object_or_404(Trabalho, pk=username)
-    if instance.aluno == usuario or instance.professor == usuario or request.session['perfil'] == 'Coordenador':
+    usuario_tcc =  Usuario.objects.get(ra=int(usuario.username))
+    if instance.professor == usuario_tcc or request.session['perfil'] == 'Coordenador':
         if request.method == "POST":
             form = TrabalhoForm(request.POST or None, instance=instance)
             if form.is_valid():

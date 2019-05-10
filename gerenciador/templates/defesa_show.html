@@ -144,7 +144,7 @@
         {%if defesa.tcc.tipo == "Andamento" %}
         {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor"%}
         <button data-toggle="modal" data-target="#exampleModal" id="adicionar" title="Enviar monografia" class="btn btn-primary  botao click">
-          <i class="fa fa-send"></i>&nbsp; Enviar monografia
+          <i class="fa fa-send"></i>&nbsp; {%if defesa.monografia%}Atualizar{%else%}Enviar{%endif%} monografia
         </button>
 
         {%if defesa.monografia and not defesa.entrega and defesa.aprovado == False%}

@@ -38,7 +38,6 @@
       <h5 class="card-title">Status</h5>
       <p>{{trabalho.tipo}}</p>
       <hr>
-      {%if trabalho.tipo == "Andamento" %}
       <h5 class="card-title">Cronograma</h5>
       <div class="cd-schedule">
        <div class="timeline">
@@ -78,13 +77,15 @@
 
 
     {% else %}
-    <p>Ainda não há atividades cadastradas para esse trabalho.</p>
+    <p>Ainda não há atividades cadastradas para esse trabalho.</p>   
     {% endif %}
+    {%if trabalho.tipo == "Andamento"%}
     {% if request.session.perfil == "Coordenador" or request.session.perfil == "Professor" %}
     <button type="submit" data-toggle="tooltip" data-placement="top" id="adicionar" title="Cadastrar Cronograma" class="btn btn-primary  botao click">
       <i class="fa fa-plus"></i>&nbsp; ATIVIDADE
     </button>
     {% endif %}
+    {%endif%}
     <div id="form"></div>
     {%if atividades%}
     <hr>
@@ -117,6 +118,7 @@
             {%else%}
             Não há entrega nessa atividade.
             {%endif%}
+            
             {% ifequal request.session.perfil "Aluno" %}
             {%if atividade.aprovado == False %}
             {%if data_hoje <= atividade.data_final and data_hoje >= atividade.data_inicio %} 
@@ -160,7 +162,6 @@
   {% endif %}
   {%endif%}
 
-  {%endif%}
 </div>
 </div>
 </div>
