@@ -80,10 +80,10 @@ class Atividade(models.Model):
         return meses_atividades
 
 class Ata(models.Model):
-    tcc = models.ForeignKey(Trabalho, related_name='TCC',help_text="TCC em Andamento",blank=True, null=True)
+    tcc = models.ForeignKey(Trabalho, related_name='TCC',help_text="TCC em Andamento",blank=True, null=True,on_delete=models.CASCADE)
     data = models.DateTimeField(help_text="Data da Defesa",default=datetime.now())
     hora = models.TimeField(null=True,blank=True)
-    monografia = models.ForeignKey(Atividade,blank=True, null=True)
+    monografia = models.ForeignKey(Atividade,blank=True, null=True,on_delete=models.CASCADE)
     aprovado = models.BooleanField(default=False, help_text="Aprovação")
     entrega = models.FileField(blank=True, null=True)
     avaliadores = models.ManyToManyField(Usuario, related_name='Avaliador')

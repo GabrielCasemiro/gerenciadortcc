@@ -25,11 +25,11 @@ SECRET_KEY = '@qfv%$u4481fq0$&4%f85sxh_s=y&12vb@o@-g@y_!6+r%o3*%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'contatositelmf@gmail.com'
-EMAIL_HOST_PASSWORD = 'gestao2018liga'
+EMAIL_HOST_USER = 'gerenciadordetcc@gmail.com'
+EMAIL_HOST_PASSWORD = 'GerenciadorTCC1234'
 EMAIL_PORT = 587
 
 
@@ -132,5 +132,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/static/img/'
-STATIC_ROOT = '/home/gabriel/Desktop/tcc/gerenciador/static/'
-MEDIA_ROOT = '/home/gabriel/Desktop/tcc/gerenciador/static/img/'
+STATIC_ROOT = '/home/gabriel/Desktop/TCC/tcc/gerenciador/static/'
+MEDIA_ROOT = '/home/gabriel/Desktop/TCC/tcc/gerenciador/static/img/'
