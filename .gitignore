@@ -5,3 +5,9 @@ myvenv
 db.sqlite3
 /static
 .DS_Store
+tcc/settings.py
+*.pdf
+*.txt
+gerenciador/migrations/*
+*.doc
+*.zip

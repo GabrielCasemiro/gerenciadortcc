@@ -141,9 +141,10 @@ def gerar_certificado(usuario,defesa):
     p.setFont("Helvetica", 12)
     mensagem = "Certifico a participação do %s %s na defesa " % (usuario.perfil, usuario.username)
     p.drawString(25,600, mensagem)
-    mensagem ="do TCC %s na data de %s. " % (defesa.tcc.titulo, defesa.data.strftime('%d/%m/%Y'))
+    mensagem ="do TCC %s" % (defesa.tcc.titulo)
     p.drawString(25,580, mensagem)
-
+    mensagem ="na data de %s. " % defesa.data.strftime('%d/%m/%Y')
+    p.drawString(25,560, mensagem)
     p.showPage()
     p.save()
 
@@ -225,13 +226,17 @@ def ata_delete(request):
 def defesa_show(request, pk):
     usuario = request.user
     path = 'defesa'
+    import pdb;pdb.set_trace()
     defesa = get_object_or_404(Ata, pk=int(pk))
 
-    atividades = Atividade.objects.filter(trabalho=Trabalho.objects.filter(pk=defesa.tcc.pk), aprovado=True)
-    integrantes = list(defesa.avaliadores.all())
-    integrantes.append(defesa.tcc.aluno)
-    integrantes.append(defesa.tcc.professor)
-    integrantes = list(set(list(integrantes)))
+    atividades = Atividade.objects.filter(trabalho=Trabalho.objects.get(pk=defesa.tcc.pk), aprovado=True)
+    try:
+        integrantes = list(defesa.avaliadores.all())
+        integrantes.append(defesa.tcc.aluno)
+        integrantes.append(defesa.tcc.professor)
+        integrantes = list(set(list(integrantes)))
+    except:
+        integrantes = list(defesa.avaliadores.all()) 
 
     return render(request, 'defesa_show.html', {'defesa':defesa,'path':path,'usuario':usuario,'atividades':atividades,'integrantes':integrantes})
 
@@ -524,6 +529,7 @@ def trabalho_add(request):
 
 def usuario_edit(request, username): 
     instance = get_object_or_404(Usuario, ra=int(username))
+
     if request.method == "POST":
         form = UserForm(request.POST or None, instance=instance)
         if form.is_valid():

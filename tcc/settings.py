@@ -30,6 +30,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'gerenciadordetcc@gmail.com'
 EMAIL_HOST_PASSWORD = 'GerenciadorTCC1234'
+
 EMAIL_PORT = 587
 
 
